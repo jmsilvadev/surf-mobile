@@ -134,6 +134,9 @@ class _RegistrationsScreenState extends State<RegistrationsScreen> {
                           final registration = _registrations[index];
                           final classDetail = _classDetails[registration.classId];
 
+                          final canLeave = classDetail != null && 
+                                          classDetail.status == 'scheduled';
+                          
                           return Card(
                             margin: const EdgeInsets.only(bottom: 12),
                             child: ListTile(
@@ -168,16 +171,72 @@ class _RegistrationsScreenState extends State<RegistrationsScreen> {
                                   : Text(
                                       'Registered: ${DateFormat('MMM dd, yyyy').format(registration.createdAt)}',
                                     ),
-                              trailing: Icon(
-                                Icons.chevron_right,
-                                color: Colors.grey.shade400,
-                              ),
+                              trailing: canLeave
+                                  ? IconButton(
+                                      icon: const Icon(Icons.exit_to_app, color: Colors.red),
+                                      onPressed: () => _leaveClass(registration.classId),
+                                      tooltip: 'Leave Class',
+                                    )
+                                  : Icon(
+                                      Icons.chevron_right,
+                                      color: Colors.grey.shade400,
+                                    ),
                             ),
                           );
                         },
                       ),
                     ),
     );
+  }
+
+  Future<void> _leaveClass(int classId) async {
+    if (_studentId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Student ID not found.')),
+      );
+      return;
+    }
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Leave Class'),
+        content: const Text('Are you sure you want to leave this class?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Leave'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) {
+      return;
+    }
+
+    try {
+      final apiService = Provider.of<ApiService>(context, listen: false);
+      await apiService.removeStudentFromClass(classId, _studentId!);
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Successfully left the class.')),
+        );
+        _loadRegistrations();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error leaving class: $e')),
+        );
+      }
+    }
   }
 
   Color _getStatusColor(String status) {

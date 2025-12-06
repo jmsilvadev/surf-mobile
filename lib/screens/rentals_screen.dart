@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:surf_mobile/services/api_service.dart';
 import 'package:surf_mobile/models/rental_model.dart';
+import 'package:surf_mobile/screens/create_rental_dialog.dart';
 
 class RentalsScreen extends StatefulWidget {
   const RentalsScreen({super.key});
@@ -80,6 +81,24 @@ class _RentalsScreenState extends State<RentalsScreen> {
           ),
         ],
       ),
+      floatingActionButton: _studentId != null
+          ? FloatingActionButton(
+              onPressed: () async {
+                final result = await showDialog(
+                  context: context,
+                  builder: (context) => CreateRentalDialog(
+                    studentId: _studentId!,
+                    schoolId: 1, // TODO: Get from user profile
+                  ),
+                );
+                if (result == true) {
+                  _loadRentals();
+                }
+              },
+              child: const Icon(Icons.add),
+              tooltip: 'Create Rental',
+            )
+          : null,
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _errorMessage != null

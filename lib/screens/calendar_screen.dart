@@ -19,10 +19,13 @@ class _CalendarScreenState extends State<CalendarScreen> {
   List<ClassModel> _classes = [];
   bool _isLoading = true;
   String? _errorMessage;
+  int? _studentId;
 
   @override
   void initState() {
     super.initState();
+    // TODO: Get student ID from authenticated user
+    _studentId = 1; // This should be fetched from user profile or API
     _loadClasses();
   }
 
@@ -181,6 +184,11 @@ class _CalendarScreenState extends State<CalendarScreen> {
       itemCount: dayClasses.length,
       itemBuilder: (context, index) {
         final classItem = dayClasses[index];
+        final isEnrolled = _studentId != null && classItem.studentIds.contains(_studentId);
+        final canJoin = _studentId != null && 
+                       !isEnrolled && 
+                       classItem.status == 'scheduled';
+        
         return Card(
           margin: const EdgeInsets.only(bottom: 12),
           child: ListTile(
@@ -200,6 +208,15 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   '${DateFormat('HH:mm').format(classItem.startDatetime)} - ${DateFormat('HH:mm').format(classItem.endDatetime)}',
                 ),
                 Text('Status: ${classItem.status}'),
+                if (isEnrolled)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Chip(
+                      label: const Text('Enrolled'),
+                      backgroundColor: Colors.green.shade100,
+                      labelStyle: TextStyle(color: Colors.green.shade900),
+                    ),
+                  ),
                 if (classItem.notes != null && classItem.notes!.isNotEmpty)
                   Text(
                     'Notes: ${classItem.notes}',
@@ -210,14 +227,50 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   ),
               ],
             ),
-            trailing: Icon(
-              Icons.chevron_right,
-              color: Colors.grey.shade400,
-            ),
+            trailing: canJoin
+                ? ElevatedButton.icon(
+                    onPressed: () => _joinClass(classItem.id),
+                    icon: const Icon(Icons.person_add, size: 18),
+                    label: const Text('Join'),
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    ),
+                  )
+                : Icon(
+                    Icons.chevron_right,
+                    color: Colors.grey.shade400,
+                  ),
           ),
         );
       },
     );
+  }
+
+  Future<void> _joinClass(int classId) async {
+    if (_studentId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Student ID not found.')),
+      );
+      return;
+    }
+
+    try {
+      final apiService = Provider.of<ApiService>(context, listen: false);
+      await apiService.addStudentToClass(classId, _studentId!);
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Successfully joined the class!')),
+        );
+        _loadClasses();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error joining class: $e')),
+        );
+      }
+    }
   }
 
   Color _getStatusColor(String status) {
