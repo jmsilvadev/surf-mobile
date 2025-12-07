@@ -190,6 +190,8 @@ class _RegistrationsScreenState extends State<RegistrationsScreen> {
   }
 
   Future<void> _leaveClass(int classId) async {
+    if (!mounted) return;
+    
     if (_studentId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Student ID not found.')),
@@ -197,6 +199,8 @@ class _RegistrationsScreenState extends State<RegistrationsScreen> {
       return;
     }
 
+    if (!mounted) return;
+    
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -216,6 +220,8 @@ class _RegistrationsScreenState extends State<RegistrationsScreen> {
       ),
     );
 
+    if (!mounted) return;
+    
     if (confirmed != true) {
       return;
     }

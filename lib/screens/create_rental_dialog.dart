@@ -190,7 +190,6 @@ class _CreateRentalDialogState extends State<CreateRentalDialog> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       DropdownButtonFormField<EquipmentModel>(
-                        value: _selectedEquipment,
                         decoration: const InputDecoration(
                           labelText: 'Equipment *',
                           border: OutlineInputBorder(),
@@ -295,6 +294,7 @@ class _CreateRentalDialogState extends State<CreateRentalDialog> {
                       ),
                       const SizedBox(height: 16),
                       TextFormField(
+                        key: ValueKey('quantity_$_quantity'),
                         initialValue: _quantity.toString(),
                         decoration: const InputDecoration(
                           labelText: 'Quantity *',

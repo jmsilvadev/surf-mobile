@@ -95,8 +95,8 @@ class _RentalsScreenState extends State<RentalsScreen> {
                   _loadRentals();
                 }
               },
-              child: const Icon(Icons.add),
               tooltip: 'Create Rental',
+              child: const Icon(Icons.add),
             )
           : null,
       body: _isLoading

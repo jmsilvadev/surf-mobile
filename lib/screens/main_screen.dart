@@ -22,6 +22,8 @@ class _MainScreenState extends State<MainScreen> {
   ];
 
   Future<void> _handleLogout() async {
+    if (!mounted) return;
+    
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -40,6 +42,8 @@ class _MainScreenState extends State<MainScreen> {
       ),
     );
 
+    if (!mounted) return;
+    
     if (confirmed == true) {
       final authService = Provider.of<AuthService>(context, listen: false);
       await authService.signOut();

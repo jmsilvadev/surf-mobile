@@ -38,8 +38,13 @@ class _CalendarScreenState extends State<CalendarScreen> {
     try {
       final apiService = Provider.of<ApiService>(context, listen: false);
       final classes = await apiService.getClasses();
+      // Filter out cancelled and completed classes.
+      final filteredClasses = classes.where((classItem) {
+        final status = classItem.status.toLowerCase();
+        return status != 'cancelled' && status != 'completed';
+      }).toList();
       setState(() {
-        _classes = classes;
+        _classes = filteredClasses;
         _isLoading = false;
       });
     } catch (e) {
