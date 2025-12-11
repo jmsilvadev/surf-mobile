@@ -4,8 +4,10 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
 import 'package:surf_mobile/services/auth_service.dart';
 import 'package:surf_mobile/services/api_service.dart';
+import 'package:surf_mobile/services/navigation_service.dart';
 import 'package:surf_mobile/screens/login_screen.dart';
 import 'package:surf_mobile/screens/main_screen.dart';
+import 'package:surf_mobile/screens/registration_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -27,9 +29,37 @@ class MyApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthService()),
-        ChangeNotifierProvider(create: (_) => ApiService()),
+        ChangeNotifierProxyProvider<AuthService, ApiService>(
+          create: (_) => ApiService(),
+          update: (_, authService, apiService) {
+            apiService ??= ApiService();
+
+            // set cached token if available
+            final cached = authService.cachedToken;
+            if (cached != null) {
+              apiService.setAuthToken(cached);
+            } else if (authService.currentUser != null) {
+              authService.getIdToken().then((token) {
+                apiService?.setAuthToken(token);
+              }).catchError((_) {
+                apiService?.setAuthToken(null);
+              });
+            } else {
+              apiService.setAuthToken(null);
+            }
+
+            // provide a callback so ApiService can refresh token on 401
+            apiService.setTokenRefreshCallback(() => authService.getIdToken(force: true));
+
+            return apiService;
+          },
+        ),
       ],
       child: MaterialApp(
+        navigatorKey: appNavigatorKey,
+        routes: {
+          '/registration': (_) => const RegistrationScreen(),
+        },
         title: 'Surf Mobile',
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
@@ -54,6 +84,16 @@ class AuthWrapper extends StatelessWidget {
             body: Center(child: CircularProgressIndicator()),
           );
         }
+        // If backend required additional registration fields, show RegistrationScreen.
+        if (authService.pendingRegistration) {
+          return const RegistrationScreen();
+        }
+
+        // If we have a server JWT cached, treat user as authenticated.
+        if (authService.cachedToken != null) {
+          return const MainScreen();
+        }
+
         return authService.currentUser != null
             ? const MainScreen()
             : const LoginScreen();

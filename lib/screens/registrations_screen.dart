@@ -26,10 +26,12 @@ class _RegistrationsScreenState extends State<RegistrationsScreen> {
   }
 
   Future<void> _loadRegistrations() async {
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
+    if (mounted) {
+      setState(() {
+        _isLoading = true;
+        _errorMessage = null;
+      });
+    }
 
     try {
       final apiService = Provider.of<ApiService>(context, listen: false);
@@ -39,10 +41,12 @@ class _RegistrationsScreenState extends State<RegistrationsScreen> {
       _studentId = 1; // This should be fetched from user profile or API
       
       if (_studentId == null) {
-        setState(() {
-          _errorMessage = 'Student ID not found.';
-          _isLoading = false;
-        });
+        if (mounted) {
+          setState(() {
+            _errorMessage = 'Student ID not found.';
+            _isLoading = false;
+          });
+        }
         return;
       }
 
@@ -55,16 +59,20 @@ class _RegistrationsScreenState extends State<RegistrationsScreen> {
         classMap[classItem.id] = classItem;
       }
 
-      setState(() {
-        _registrations = registrations;
-        _classDetails = classMap;
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _registrations = registrations;
+          _classDetails = classMap;
+          _isLoading = false;
+        });
+      }
     } catch (e) {
-      setState(() {
-        _errorMessage = 'Error loading registrations: $e';
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _errorMessage = 'Error loading registrations: $e';
+          _isLoading = false;
+        });
+      }
     }
   }
 

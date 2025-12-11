@@ -51,10 +51,10 @@ class _CreateRentalDialogState extends State<CreateRentalDialog> {
       final activePrices = prices.where((p) => p.active).toList();
       
       if (activePrices.isEmpty) {
-        setState(() {
-          _loadingData = false;
-        });
         if (mounted) {
+          setState(() {
+            _loadingData = false;
+          });
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('No equipment prices available.')),
           );
@@ -78,16 +78,18 @@ class _CreateRentalDialogState extends State<CreateRentalDialog> {
                priceMap.containsKey(e.schoolId);
       }).toList();
       
-      setState(() {
-        _equipmentList = availableEquipment;
-        _equipmentPrices = priceMap;
-        _loadingData = false;
-      });
-    } catch (e) {
-      setState(() {
-        _loadingData = false;
-      });
       if (mounted) {
+        setState(() {
+          _equipmentList = availableEquipment;
+          _equipmentPrices = priceMap;
+          _loadingData = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _loadingData = false;
+        });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error loading data: $e')),
         );
@@ -103,16 +105,18 @@ class _CreateRentalDialogState extends State<CreateRentalDialog> {
       lastDate: DateTime.now().add(const Duration(days: 365)),
     );
     if (picked != null) {
-      setState(() {
-        if (isStartDate) {
-          _startDate = picked;
-          if (_endDate != null && _endDate!.isBefore(_startDate!)) {
-            _endDate = null;
+      if (mounted) {
+        setState(() {
+          if (isStartDate) {
+            _startDate = picked;
+            if (_endDate != null && _endDate!.isBefore(_startDate!)) {
+              _endDate = null;
+            }
+          } else {
+            _endDate = picked;
           }
-        } else {
-          _endDate = picked;
-        }
-      });
+        });
+      }
     }
   }
 

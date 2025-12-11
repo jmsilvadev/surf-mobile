@@ -9,6 +9,8 @@ import 'package:surf_mobile/models/price_model.dart';
 
 class ApiService extends ChangeNotifier {
   late Dio _dio;
+  String? _authToken;
+  Future<String?> Function()? _tokenRefreshCallback;
 
   ApiService() {
     _dio = Dio(BaseOptions(
@@ -20,14 +22,81 @@ class ApiService extends ChangeNotifier {
         'Accept': 'application/json',
       },
     ));
+    // Interceptor: attach token; if missing, try to refresh via callback before request.
+    _dio.interceptors.add(InterceptorsWrapper(
+      onRequest: (options, handler) async {
+        // allow unauthenticated access to auth endpoints
+        final path = options.path;
+        if (path.startsWith('/api/auth')) {
+          handler.next(options);
+          return;
+        }
+
+        // If we have token attach it
+        if (_authToken != null && !(options.headers?.containsKey('Authorization') ?? false)) {
+          options.headers['Authorization'] = 'Bearer $_authToken';
+          handler.next(options);
+          return;
+        }
+
+        // No token: try to refresh via callback if provided
+        if (_tokenRefreshCallback != null) {
+          try {
+            final newToken = await _tokenRefreshCallback!.call();
+            if (newToken != null) {
+              setAuthToken(newToken);
+              options.headers['Authorization'] = 'Bearer $newToken';
+              handler.next(options);
+              return;
+            }
+          } catch (e) {
+            if (kDebugMode) print('Token refresh failed before request: $e');
+          }
+        }
+
+        // If still no token, reject request with clear error
+        handler.reject(DioException(
+          requestOptions: options,
+          error: 'No authentication token available',
+          response: Response(requestOptions: options, statusCode: 401, data: {'error': 'missing_token'}),
+        ));
+      },
+      onError: (err, handler) async {
+        final statusCode = err.response?.statusCode;
+        if (statusCode == 401 && _tokenRefreshCallback != null) {
+          try {
+            final newToken = await _tokenRefreshCallback!.call();
+            if (newToken != null) {
+              setAuthToken(newToken);
+              final opts = err.requestOptions;
+              opts.headers['Authorization'] = 'Bearer $newToken';
+              try {
+                final response = await _dio.fetch(opts);
+                return handler.resolve(response);
+              } catch (e) {
+                return handler.next(err);
+              }
+            }
+          } catch (_) {
+            // ignore and forward original error
+          }
+        }
+        handler.next(err);
+      },
+    ));
   }
 
   void setAuthToken(String? token) {
+    _authToken = token;
     if (token != null) {
       _dio.options.headers['Authorization'] = 'Bearer $token';
     } else {
       _dio.options.headers.remove('Authorization');
     }
+  }
+
+  void setTokenRefreshCallback(Future<String?> Function()? cb) {
+    _tokenRefreshCallback = cb;
   }
 
   Future<List<ClassModel>> getClasses() async {
@@ -164,6 +233,22 @@ class ApiService extends ChangeNotifier {
     } catch (e) {
       if (kDebugMode) {
         print('Error fetching prices: $e');
+      }
+      rethrow;
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getSchools() async {
+    try {
+      final response = await _dio.get('/api/schools');
+      if (response.data is List) {
+        final raw = response.data as List;
+        return raw.map((e) => e as Map<String, dynamic>).toList();
+      }
+      return [];
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error fetching schools: $e');
       }
       rethrow;
     }

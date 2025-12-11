@@ -7,5 +7,8 @@ class AppConfig {
   // Timeout durations.
   static const Duration connectTimeout = Duration(seconds: 30);
   static const Duration receiveTimeout = Duration(seconds: 30);
+
+  // OAuth client id for server-side verification (web client id)
+  static String get googleServerClientId => dotenv.env['GOOGLE_SERVER_CLIENT_ID'] ?? '';
 }
 
