@@ -58,18 +58,23 @@ class AuthService extends ChangeNotifier {
 
   Future<String?> getIdToken({bool force = false}) async {
     // Return cached server JWT if available and not forced
-    if (!force && _token != null) return _token;
+    if (!force && _token != null) {
+      if (kDebugMode) print('[AuthService] Returning cached server JWT');
+      return _token;
+    }
 
     // Try to load from prefs
     final prefs = await SharedPreferences.getInstance();
     final stored = prefs.getString('auth_token');
     if (!force && stored != null) {
+      if (kDebugMode) print('[AuthService] Loaded server JWT from SharedPreferences');
       _token = stored;
       return stored;
     }
 
     // If user is not signed in, return stored or null
     if (_currentUser == null) {
+      if (kDebugMode) print('[AuthService] No current Firebase user; cannot refresh JWT');
       _token = stored;
       return _token;
     }
@@ -79,11 +84,13 @@ class AuthService extends ChangeNotifier {
     String? gid = _googleIdToken;
     if (gid == null) {
       try {
+        if (kDebugMode) print('[AuthService] No cached Google id_token; attempting silent sign-in');
         final googleUser = await _googleSignIn.signInSilently();
         if (googleUser != null) {
           final googleAuth = await googleUser.authentication;
           gid = googleAuth.idToken;
           _googleIdToken = gid;
+          if (kDebugMode && gid != null) _logJwtDebug('Silent sign-in id_token', gid);
         }
       } catch (_) {
         // ignore
@@ -93,8 +100,10 @@ class AuthService extends ChangeNotifier {
     if (gid == null) {
       // fallback: try Firebase id token (might be acceptable for some backends)
       try {
+        if (kDebugMode) print('[AuthService] Falling back to Firebase id_token for exchange');
         final firebaseToken = await _currentUser!.getIdToken(force);
         gid = firebaseToken;
+        if (kDebugMode && gid != null) _logJwtDebug('Firebase fallback id_token', gid);
       } catch (_) {
         gid = null;
       }
@@ -127,12 +136,23 @@ class AuthService extends ChangeNotifier {
 
   Future<String?> _fetchFreshGoogleIdToken() async {
     try {
+      if (kDebugMode) print('[AuthService] Attempting to fetch fresh Google id_token');
       // Prefer GoogleSignIn id_token (OAuth2 id token) which backends commonly verify.
       try {
         final account = await _googleSignIn.signInSilently();
+        if (kDebugMode) {
+          if (account != null) {
+            print('[AuthService] Silent Google sign-in succeeded for ${account.email}');
+          } else {
+            print('[AuthService] Silent Google sign-in returned null account');
+          }
+        }
         final auth = await account?.authentication;
         final id = auth?.idToken;
-        if (id != null && id.isNotEmpty) return id;
+        if (id != null && id.isNotEmpty) {
+          if (kDebugMode) _logJwtDebug('Fresh id_token from GoogleSignIn', id);
+          return id;
+        }
       } catch (_) {}
 
       // Fallback to Firebase id token if GoogleSignIn token unavailable.
@@ -140,8 +160,13 @@ class AuthService extends ChangeNotifier {
       if (user != null) {
         try {
           final token = await user.getIdToken(true);
-          if (token != null && token.isNotEmpty) return token;
+          if (token != null && token.isNotEmpty) {
+            if (kDebugMode) _logJwtDebug('Fresh id_token from Firebase', token);
+            return token;
+          }
         } catch (_) {}
+      } else {
+        if (kDebugMode) print('[AuthService] No Firebase user when fetching fresh id_token');
       }
 
       return null;
@@ -187,13 +212,22 @@ class AuthService extends ChangeNotifier {
 
   Future<UserCredential?> signInWithGoogle() async {
     try {
+      if (kDebugMode) print('[AuthService] Starting Google sign-in flow');
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
       if (googleUser == null) {
+        if (kDebugMode) print('[AuthService] Google sign-in aborted by user');
         return null;
       }
 
+      if (kDebugMode) {
+        print('[AuthService] Google account obtained: ${googleUser.email}');
+      }
       final GoogleSignInAuthentication googleAuth =
           await googleUser.authentication;
+      if (kDebugMode) {
+        print('[AuthService] Received Google auth tokens');
+        _logJwtDebug('Google id_token after signIn()', googleAuth.idToken ?? '');
+      }
 
       final credential = GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
@@ -204,6 +238,10 @@ class AuthService extends ChangeNotifier {
 
       // Sign in to Firebase first
       final userCredential = await _auth.signInWithCredential(credential);
+      if (kDebugMode) {
+        print(
+            '[AuthService] Firebase sign-in complete for uid=${userCredential.user?.uid}');
+      }
 
       // Exchange using the freshest id_token we can obtain
       final freshId = await _fetchFreshGoogleIdToken() ?? _googleIdToken;
@@ -261,7 +299,14 @@ class AuthService extends ChangeNotifier {
       notifyListeners();
       return userCredential;
     } on FirebaseAuthException catch (e) {
+      if (kDebugMode) print('[AuthService] FirebaseAuthException during Google sign-in: ${e.code} ${e.message}');
       throw _handleAuthException(e);
+    } catch (e, s) {
+      if (kDebugMode) {
+        print('[AuthService] Unexpected error during Google sign-in: $e');
+        print(s);
+      }
+      rethrow;
     }
   }
 
@@ -370,4 +415,3 @@ class AuthService extends ChangeNotifier {
     }
   }
 }
-

@@ -87,18 +87,22 @@ class _LoginScreenState extends State<LoginScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Icon(
-                    Icons.surfing,
-                    size: 80,
-                    color: Colors.blue,
+                  Image.asset(
+                    'assets/images/logo-oceandojo.png',
+                    height: 160,
+                    fit: BoxFit.contain,
                   ),
                   const SizedBox(height: 24),
-                  const Text(
-                    'Surf Mobile',
-                    style: TextStyle(
-                      fontSize: 32,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  Text(
+                    'OceanDojo',
+                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: Theme.of(context).colorScheme.primary,
+                        ) ??
+                        const TextStyle(
+                            fontSize: 32,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF005B82)),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 48),
@@ -212,4 +216,3 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 }
-

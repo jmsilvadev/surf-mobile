@@ -54,7 +54,7 @@ class _MainScreenState extends State<MainScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Surf Mobile'),
+        title: const Text('OceanDojo'),
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
@@ -65,6 +65,12 @@ class _MainScreenState extends State<MainScreen> {
       ),
       body: _screens[_currentIndex],
       bottomNavigationBar: BottomNavigationBar(
+        backgroundColor:
+            Theme.of(context).bottomNavigationBarTheme.backgroundColor,
+        selectedItemColor:
+            Theme.of(context).bottomNavigationBarTheme.selectedItemColor,
+        unselectedItemColor:
+            Theme.of(context).bottomNavigationBarTheme.unselectedItemColor,
         currentIndex: _currentIndex,
         onTap: (index) {
           setState(() {
@@ -89,4 +95,3 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 }
-

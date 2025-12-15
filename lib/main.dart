@@ -2,12 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
-import 'package:surf_mobile/services/auth_service.dart';
 import 'package:surf_mobile/services/api_service.dart';
+import 'package:surf_mobile/services/auth_service.dart';
 import 'package:surf_mobile/services/navigation_service.dart';
 import 'package:surf_mobile/screens/login_screen.dart';
 import 'package:surf_mobile/screens/main_screen.dart';
 import 'package:surf_mobile/screens/registration_screen.dart';
+import 'package:surf_mobile/theme/app_theme.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -60,12 +61,9 @@ class MyApp extends StatelessWidget {
         routes: {
           '/registration': (_) => const RegistrationScreen(),
         },
-        title: 'Surf Mobile',
+        title: 'OceanDojo',
         debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
-          useMaterial3: true,
-        ),
+        theme: AppTheme.themeData,
         home: const AuthWrapper(),
       ),
     );
@@ -101,4 +99,3 @@ class AuthWrapper extends StatelessWidget {
     );
   }
 }
-
