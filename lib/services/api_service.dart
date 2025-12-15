@@ -6,6 +6,7 @@ import 'package:surf_mobile/models/rental_model.dart';
 import 'package:surf_mobile/models/class_student_model.dart';
 import 'package:surf_mobile/models/equipment_model.dart';
 import 'package:surf_mobile/models/price_model.dart';
+import 'package:surf_mobile/models/user_profile.dart';
 
 class ApiService extends ChangeNotifier {
   late Dio _dio;
@@ -33,7 +34,7 @@ class ApiService extends ChangeNotifier {
         }
 
         // If we have token attach it
-        if (_authToken != null && !(options.headers?.containsKey('Authorization') ?? false)) {
+        if (_authToken != null && !options.headers.containsKey('Authorization')) {
           options.headers['Authorization'] = 'Bearer $_authToken';
           handler.next(options);
           return;
@@ -279,5 +280,82 @@ class ApiService extends ChangeNotifier {
       rethrow;
     }
   }
-}
 
+  Future<UserProfile> getCurrentUserProfile() async {
+    try {
+      final response = await _dio.get('/api/auth/me');
+      if (response.data is Map<String, dynamic>) {
+        return UserProfile.fromJson(response.data as Map<String, dynamic>);
+      }
+      if (response.data is Map) {
+        final map = Map<String, dynamic>.from(response.data as Map);
+        return UserProfile.fromJson(map);
+      }
+      throw Exception('Unexpected profile response format');
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error fetching current user profile: $e');
+      }
+      rethrow;
+    }
+  }
+
+  Future<StudentProfile> updateStudentSchool({
+    required StudentProfile student,
+    required int schoolId,
+  }) async {
+    try {
+      final payload = student.toUpdatePayload(overrideSchoolId: schoolId);
+      final response = await _dio.put('/api/students/${student.id}', data: payload);
+      if (response.data is Map<String, dynamic>) {
+        return StudentProfile.fromJson(response.data as Map<String, dynamic>);
+      }
+      if (response.data is Map) {
+        final map = Map<String, dynamic>.from(response.data as Map);
+        return StudentProfile.fromJson(map);
+      }
+      throw Exception('Unexpected response updating student');
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error updating student school: $e');
+      }
+      rethrow;
+    }
+  }
+
+  Future<StudentProfile> createStudentProfile({
+    required int schoolId,
+    required String name,
+    required String userId,
+    String? taxNumber,
+    String? phone,
+    DateTime? birthDate,
+    bool active = true,
+  }) async {
+    try {
+      final payload = <String, dynamic>{
+        'school_id': schoolId,
+        'name': name,
+        'user_id': userId,
+        'active': active,
+        if (taxNumber != null && taxNumber.isNotEmpty) 'tax_number': taxNumber,
+        if (phone != null && phone.isNotEmpty) 'phone': phone,
+        if (birthDate != null) 'birth_date': birthDate.toIso8601String(),
+      };
+      final response = await _dio.post('/api/students', data: payload);
+      if (response.data is Map<String, dynamic>) {
+        return StudentProfile.fromJson(response.data as Map<String, dynamic>);
+      }
+      if (response.data is Map) {
+        final map = Map<String, dynamic>.from(response.data as Map);
+        return StudentProfile.fromJson(map);
+      }
+      throw Exception('Unexpected response creating student');
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error creating student profile: $e');
+      }
+      rethrow;
+    }
+  }
+}

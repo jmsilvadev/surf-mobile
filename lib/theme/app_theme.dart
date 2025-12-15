@@ -17,14 +17,13 @@ class AppTheme {
     primary: AppColors.primaryBlue,
     secondary: AppColors.sunsetOrange,
     surface: AppColors.sandBackground,
-    background: AppColors.sandBackground,
   );
 
   static final ThemeData themeData = ThemeData(
     colorScheme: colorScheme,
     useMaterial3: true,
     scaffoldBackgroundColor: AppColors.sandBackground,
-    textTheme: TextTheme(
+    textTheme: const TextTheme(
       displayLarge: TextStyle(color: AppColors.primaryBlue),
       displayMedium: TextStyle(color: AppColors.primaryBlue),
       displaySmall: TextStyle(color: AppColors.primaryBlue),
@@ -34,8 +33,8 @@ class AppTheme {
       titleLarge: TextStyle(color: AppColors.primaryBlue),
       titleMedium: TextStyle(color: AppColors.deepBlue),
       titleSmall: TextStyle(color: AppColors.deepBlue),
-      bodyLarge: const TextStyle(color: Colors.black87),
-      bodyMedium: const TextStyle(color: Colors.black87),
+      bodyLarge: TextStyle(color: Colors.black87),
+      bodyMedium: TextStyle(color: Colors.black87),
       bodySmall: TextStyle(color: Colors.black54),
     ),
     appBarTheme: const AppBarTheme(
@@ -52,7 +51,7 @@ class AppTheme {
     cardTheme: CardThemeData(
       color: Colors.white,
       elevation: 2,
-      shadowColor: AppColors.primaryBlue.withOpacity(0.1),
+      shadowColor: AppColors.primaryBlue.withValues(alpha: 0.1),
       surfaceTintColor: Colors.transparent,
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(
@@ -89,11 +88,11 @@ class AppTheme {
       labelStyle: const TextStyle(color: AppColors.deepBlue),
     ),
     chipTheme: ChipThemeData(
-      backgroundColor: AppColors.primaryBlue.withOpacity(0.1),
-      selectedColor: AppColors.sunsetOrange.withOpacity(0.2),
+      backgroundColor: AppColors.primaryBlue.withValues(alpha: 0.1),
+      selectedColor: AppColors.sunsetOrange.withValues(alpha: 0.2),
       labelStyle: const TextStyle(color: AppColors.primaryBlue),
     ),
-    dividerColor: AppColors.deepBlue.withOpacity(0.1),
+    dividerColor: AppColors.deepBlue.withValues(alpha: 0.1),
     snackBarTheme: const SnackBarThemeData(
       backgroundColor: AppColors.deepBlue,
       contentTextStyle: TextStyle(color: Colors.white),

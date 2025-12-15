@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:surf_mobile/services/api_service.dart';
 import 'package:surf_mobile/models/class_student_model.dart';
 import 'package:surf_mobile/models/class_model.dart';
+import 'package:surf_mobile/services/user_provider.dart';
 
 class RegistrationsScreen extends StatefulWidget {
   const RegistrationsScreen({super.key});
@@ -35,10 +36,8 @@ class _RegistrationsScreenState extends State<RegistrationsScreen> {
 
     try {
       final apiService = Provider.of<ApiService>(context, listen: false);
-      
-      // TODO: Get student ID from authenticated user
-      // For now, using a placeholder. In production, this should come from Firebase Auth user metadata
-      _studentId = 1; // This should be fetched from user profile or API
+      final userProvider = Provider.of<UserProvider>(context, listen: false);
+      _studentId = userProvider.studentId;
       
       if (_studentId == null) {
         if (mounted) {
@@ -268,4 +267,3 @@ class _RegistrationsScreenState extends State<RegistrationsScreen> {
     }
   }
 }
-

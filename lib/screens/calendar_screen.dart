@@ -4,6 +4,7 @@ import 'package:table_calendar/table_calendar.dart';
 import 'package:intl/intl.dart';
 import 'package:surf_mobile/services/api_service.dart';
 import 'package:surf_mobile/models/class_model.dart';
+import 'package:surf_mobile/services/user_provider.dart';
 
 class CalendarScreen extends StatefulWidget {
   const CalendarScreen({super.key});
@@ -24,8 +25,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
   @override
   void initState() {
     super.initState();
-    // TODO: Get student ID from authenticated user
-    _studentId = 1; // This should be fetched from user profile or API
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    _studentId = userProvider.studentId;
     _loadClasses();
   }
 
@@ -293,4 +294,3 @@ class _CalendarScreenState extends State<CalendarScreen> {
     }
   }
 }
-

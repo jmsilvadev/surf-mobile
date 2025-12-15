@@ -159,17 +159,25 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
               Expanded(
                 child: _filteredSchools.isEmpty
                     ? const Text('Nenhuma escola encontrada.')
-                    : ListView(
-                        shrinkWrap: true,
-                        children: _filteredSchools.map((s) {
-                          final id = s['id'] is int ? s['id'] as int : int.tryParse(s['id']?.toString() ?? '0') ?? 0;
-                          return RadioListTile<int>(
-                            title: Text(s['name']?.toString() ?? 'Escola $id'),
-                            value: id,
-                            groupValue: _selectedSchoolId,
-                            onChanged: (v) => setState(() => _selectedSchoolId = v),
+                    : ListView.builder(
+                        itemCount: _filteredSchools.length,
+                        itemBuilder: (context, index) {
+                          final school = _filteredSchools[index];
+                          final id = school['id'] is int
+                              ? school['id'] as int
+                              : int.tryParse(school['id']?.toString() ?? '0') ?? 0;
+                          final isSelected = _selectedSchoolId == id;
+                          return ListTile(
+                            leading: Icon(
+                              isSelected ? Icons.radio_button_checked : Icons.radio_button_off,
+                              color: isSelected
+                                  ? Theme.of(context).colorScheme.primary
+                                  : Colors.grey,
+                            ),
+                            title: Text(school['name']?.toString() ?? 'Escola $id'),
+                            onTap: () => setState(() => _selectedSchoolId = id),
                           );
-                        }).toList(),
+                        },
                       ),
               ),
               TextButton(

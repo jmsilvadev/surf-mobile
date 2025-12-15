@@ -6,7 +6,6 @@ import 'dart:math' show min;
 import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:surf_mobile/config/app_config.dart';
-import 'package:surf_mobile/screens/registration_screen.dart';
 import 'package:surf_mobile/services/navigation_service.dart';
 
 class AuthService extends ChangeNotifier {
@@ -116,12 +115,15 @@ class AuthService extends ChangeNotifier {
       if (kDebugMode) _logJwtDebug('Exchanging id_token', gid);
       final resp = await dio.post('/api/auth/google', data: {'id_token': gid});
       String? jwt;
-      if (resp.data is String) jwt = resp.data as String;
-      else if (resp.data is Map) {
+      if (resp.data is String) {
+        jwt = resp.data as String;
+      } else if (resp.data is Map) {
         final map = resp.data as Map;
         jwt = map['token'] ?? map['access_token'] ?? map['jwt'] ?? map['token']?.toString();
       }
-      if (jwt == null) throw Exception('Invalid auth response: ${resp.data}');
+      if (jwt == null) {
+        throw Exception('Invalid auth response: ${resp.data}');
+      }
       _token = jwt;
       await _saveToken(jwt);
       return jwt;
@@ -258,8 +260,9 @@ class AuthService extends ChangeNotifier {
         final resp = await dio.post('/api/auth/google', data: {'id_token': freshId});
         if (kDebugMode) print('Auth exchange response: ${resp.statusCode} ${resp.data}');
         String? jwt;
-        if (resp.data is String) jwt = resp.data as String;
-        else if (resp.data is Map) {
+        if (resp.data is String) {
+          jwt = resp.data as String;
+        } else if (resp.data is Map) {
           final map = resp.data as Map;
           jwt = map['token'] ?? map['access_token'] ?? map['jwt'] ?? map['token']?.toString();
         }
@@ -348,8 +351,9 @@ class AuthService extends ChangeNotifier {
       });
       if (kDebugMode) print('Complete registration response: ${resp.statusCode} ${resp.data}');
       String? jwt;
-      if (resp.data is String) jwt = resp.data as String;
-      else if (resp.data is Map) {
+      if (resp.data is String) {
+        jwt = resp.data as String;
+      } else if (resp.data is Map) {
         final map = resp.data as Map;
         jwt = map['token'] ?? map['access_token'] ?? map['jwt'] ?? map['token']?.toString();
       }

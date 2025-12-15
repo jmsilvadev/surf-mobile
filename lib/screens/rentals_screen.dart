@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:surf_mobile/services/api_service.dart';
 import 'package:surf_mobile/models/rental_model.dart';
 import 'package:surf_mobile/screens/create_rental_dialog.dart';
+import 'package:surf_mobile/services/user_provider.dart';
 
 class RentalsScreen extends StatefulWidget {
   const RentalsScreen({super.key});
@@ -17,6 +18,7 @@ class _RentalsScreenState extends State<RentalsScreen> {
   bool _isLoading = true;
   String? _errorMessage;
   int? _studentId;
+  int? _schoolId;
   bool _showAllRentals = false;
 
   @override
@@ -33,10 +35,9 @@ class _RentalsScreenState extends State<RentalsScreen> {
 
     try {
       final apiService = Provider.of<ApiService>(context, listen: false);
-      
-      // TODO: Get student ID from authenticated user
-      // For now, using a placeholder. In production, this should come from Firebase Auth user metadata
-      _studentId = 1; // This should be fetched from user profile or API
+      final userProvider = Provider.of<UserProvider>(context, listen: false);
+      _studentId = userProvider.studentId;
+      _schoolId = userProvider.schoolId;
       
       List<RentalModel> rentals;
       if (_showAllRentals || _studentId == null) {
@@ -81,14 +82,14 @@ class _RentalsScreenState extends State<RentalsScreen> {
           ),
         ],
       ),
-      floatingActionButton: _studentId != null
+      floatingActionButton: _studentId != null && _schoolId != null
           ? FloatingActionButton(
               onPressed: () async {
                 final result = await showDialog(
                   context: context,
                   builder: (context) => CreateRentalDialog(
                     studentId: _studentId!,
-                    schoolId: 1, // TODO: Get from user profile
+                    schoolId: _schoolId!,
                   ),
                 );
                 if (result == true) {
@@ -212,4 +213,3 @@ class _RentalsScreenState extends State<RentalsScreen> {
     }
   }
 }
-

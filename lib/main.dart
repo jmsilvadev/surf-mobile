@@ -8,7 +8,9 @@ import 'package:surf_mobile/services/navigation_service.dart';
 import 'package:surf_mobile/screens/login_screen.dart';
 import 'package:surf_mobile/screens/main_screen.dart';
 import 'package:surf_mobile/screens/registration_screen.dart';
+import 'package:surf_mobile/screens/school_selection_screen.dart';
 import 'package:surf_mobile/theme/app_theme.dart';
+import 'package:surf_mobile/services/user_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -55,6 +57,14 @@ class MyApp extends StatelessWidget {
             return apiService;
           },
         ),
+        ChangeNotifierProxyProvider2<AuthService, ApiService, UserProvider>(
+          create: (_) => UserProvider(),
+          update: (_, authService, apiService, userProvider) {
+            userProvider ??= UserProvider();
+            userProvider.updateDependencies(authService, apiService);
+            return userProvider;
+          },
+        ),
       ],
       child: MaterialApp(
         navigatorKey: appNavigatorKey,
@@ -87,14 +97,82 @@ class AuthWrapper extends StatelessWidget {
           return const RegistrationScreen();
         }
 
-        // If we have a server JWT cached, treat user as authenticated.
-        if (authService.cachedToken != null) {
-          return const MainScreen();
+        final bool isAuthenticated =
+            authService.cachedToken != null || authService.currentUser != null;
+
+        return isAuthenticated ? const HomeRouter() : const LoginScreen();
+      },
+    );
+  }
+}
+
+class HomeRouter extends StatefulWidget {
+  const HomeRouter({super.key});
+
+  @override
+  State<HomeRouter> createState() => _HomeRouterState();
+}
+
+class _HomeRouterState extends State<HomeRouter> {
+  bool _requestedLoad = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_requestedLoad) {
+      final userProvider = Provider.of<UserProvider>(context, listen: false);
+      userProvider.ensureProfileLoaded();
+      _requestedLoad = true;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<UserProvider>(
+      builder: (context, userProvider, _) {
+        if (userProvider.loadError != null) {
+          return Scaffold(
+            body: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                  const SizedBox(height: 16),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                    child: Text(
+                      userProvider.loadError!,
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () => userProvider.ensureProfileLoaded(),
+                    child: const Text('Tentar novamente'),
+                  ),
+                ],
+              ),
+            ),
+          );
         }
 
-        return authService.currentUser != null
-            ? const MainScreen()
-            : const LoginScreen();
+        if (userProvider.isLoading && userProvider.profile == null) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        if (userProvider.requiresSchoolSelection) {
+          return const SchoolSelectionScreen();
+        }
+
+        if (userProvider.profile == null) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        return const MainScreen();
       },
     );
   }
