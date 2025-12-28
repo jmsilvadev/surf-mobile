@@ -37,7 +37,7 @@ class _LoginScreenState extends State<LoginScreen> {
     }
 
     try {
-      final authService = Provider.of<AuthService>(context, listen: false);
+      final authService = context.read<AuthService>();
       await authService.signInWithEmailAndPassword(
         _emailController.text.trim(),
         _passwordController.text,
@@ -53,7 +53,6 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _signInWithGoogle() async {
-
     if (mounted) {
       setState(() {
         _isLoading = true;
@@ -96,9 +95,9 @@ class _LoginScreenState extends State<LoginScreen> {
                   Text(
                     'OceanDojo',
                     style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: Theme.of(context).colorScheme.primary,
-                        ) ??
+                              fontWeight: FontWeight.bold,
+                              color: Theme.of(context).colorScheme.primary,
+                            ) ??
                         const TextStyle(
                             fontSize: 32,
                             fontWeight: FontWeight.bold,

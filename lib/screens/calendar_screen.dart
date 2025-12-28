@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:surf_mobile/providers/class_pack_provider.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:intl/intl.dart';
 import 'package:surf_mobile/services/api_service.dart';
@@ -185,16 +186,38 @@ class _CalendarScreenState extends State<CalendarScreen> {
       );
     }
 
+    final packProvider = context.watch<ClassPackProvider>();
+    if (!packProvider.hasCredits) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.lock, size: 64),
+            const SizedBox(height: 12),
+            const Text('You have no class credits'),
+            const SizedBox(height: 12),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pushNamed(context, '/packs');
+              },
+              child: const Text('Buy a pack'),
+            ),
+          ],
+        ),
+      );
+    }
+
     return ListView.builder(
       padding: const EdgeInsets.all(16),
       itemCount: dayClasses.length,
       itemBuilder: (context, index) {
         final classItem = dayClasses[index];
-        final isEnrolled = _studentId != null && classItem.studentIds.contains(_studentId);
-        final canJoin = _studentId != null && 
-                       !isEnrolled && 
-                       classItem.status == 'scheduled';
-        
+        final isEnrolled =
+            _studentId != null && classItem.studentIds.contains(_studentId);
+        final canJoin = _studentId != null &&
+            !isEnrolled &&
+            classItem.status == 'scheduled';
+
         return Card(
           margin: const EdgeInsets.only(bottom: 12),
           child: ListTile(
@@ -239,7 +262,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     icon: const Icon(Icons.person_add, size: 18),
                     label: const Text('Join'),
                     style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 8),
                     ),
                   )
                 : Icon(
@@ -263,7 +287,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
     try {
       final apiService = Provider.of<ApiService>(context, listen: false);
       await apiService.addStudentToClass(classId, _studentId!);
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Successfully joined the class!')),

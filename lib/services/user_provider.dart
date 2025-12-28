@@ -20,12 +20,14 @@ class UserProvider extends ChangeNotifier {
   bool get isStudent => _profile?.user.userType == 'student';
   int? get studentId => _profile?.student?.id;
   int? get schoolId => _profile?.student?.schoolId;
+  String? get studentSkillSlug => _profile?.student?.skillLevel?.slug;
 
   void updateDependencies(AuthService auth, ApiService api) {
     _authService = auth;
     _apiService = api;
 
-    final bool isLoggedOut = auth.cachedToken == null && auth.currentUser == null;
+    final bool isLoggedOut =
+        auth.cachedToken == null && auth.currentUser == null;
     if (isLoggedOut) {
       _profile = null;
       _loadError = null;

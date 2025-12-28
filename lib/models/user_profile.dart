@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:surf_mobile/models/skill_level_model.dart';
 
 class UserAccount {
   final String id;
@@ -34,6 +35,7 @@ class StudentProfile {
   final DateTime? birthDate;
   final String userId;
   final bool active;
+  final SkillLevel? skillLevel;
 
   const StudentProfile({
     required this.id,
@@ -44,6 +46,7 @@ class StudentProfile {
     required this.active,
     this.phone,
     this.birthDate,
+    this.skillLevel,
   });
 
   factory StudentProfile.fromJson(Map<String, dynamic> json) {
@@ -60,7 +63,9 @@ class StudentProfile {
     }
 
     return StudentProfile(
-      id: json['id'] is int ? json['id'] as int : int.tryParse(json['id']?.toString() ?? '0') ?? 0,
+      id: json['id'] is int
+          ? json['id'] as int
+          : int.tryParse(json['id']?.toString() ?? '0') ?? 0,
       schoolId: json['school_id'] is int
           ? json['school_id'] as int
           : int.tryParse(json['school_id']?.toString() ?? '0') ?? 0,
@@ -72,6 +77,9 @@ class StudentProfile {
       active: json['active'] is bool
           ? json['active'] as bool
           : json['active'].toString().toLowerCase() == 'true',
+      skillLevel: json['skill_level'] != null
+          ? SkillLevel.fromJson(json['skill_level'])
+          : null,
     );
   }
 
@@ -82,6 +90,7 @@ class StudentProfile {
     String? phone,
     DateTime? birthDate,
     bool? active,
+    SkillLevel? skillLevel,
   }) {
     return StudentProfile(
       id: id,
@@ -92,6 +101,7 @@ class StudentProfile {
       birthDate: birthDate ?? this.birthDate,
       userId: userId,
       active: active ?? this.active,
+      skillLevel: skillLevel ?? this.skillLevel,
     );
   }
 
@@ -134,7 +144,9 @@ class TeacherProfile {
 
   factory TeacherProfile.fromJson(Map<String, dynamic> json) {
     return TeacherProfile(
-      id: json['id'] is int ? json['id'] as int : int.tryParse(json['id']?.toString() ?? '0') ?? 0,
+      id: json['id'] is int
+          ? json['id'] as int
+          : int.tryParse(json['id']?.toString() ?? '0') ?? 0,
       schoolId: json['school_id'] is int
           ? json['school_id'] as int
           : int.tryParse(json['school_id']?.toString() ?? '0') ?? 0,

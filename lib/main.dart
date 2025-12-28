@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
+import 'package:surf_mobile/providers/class_pack_provider.dart';
 import 'package:surf_mobile/services/api_service.dart';
 import 'package:surf_mobile/services/auth_service.dart';
 import 'package:surf_mobile/services/navigation_service.dart';
@@ -14,13 +15,13 @@ import 'package:surf_mobile/services/user_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // Load environment variables.
   await dotenv.load(fileName: '.env');
-  
+
   // Initialize Firebase.
   await Firebase.initializeApp();
-  
+
   runApp(const MyApp());
 }
 
@@ -52,7 +53,8 @@ class MyApp extends StatelessWidget {
             }
 
             // provide a callback so ApiService can refresh token on 401
-            apiService.setTokenRefreshCallback(() => authService.getIdToken(force: true));
+            apiService.setTokenRefreshCallback(
+                () => authService.getIdToken(force: true));
 
             return apiService;
           },
@@ -63,6 +65,18 @@ class MyApp extends StatelessWidget {
             userProvider ??= UserProvider();
             userProvider.updateDependencies(authService, apiService);
             return userProvider;
+          },
+        ),
+        ChangeNotifierProxyProvider2<ApiService, UserProvider,
+            ClassPackProvider>(
+          create: (context) => ClassPackProvider(
+            Provider.of<ApiService>(context, listen: false),
+            Provider.of<UserProvider>(context, listen: false),
+          ),
+          update: (context, api, user, packProvider) {
+            // Se o packProvider ainda não existe, cria.
+            // Se já existe, as instâncias de api e user já são atualizadas pelo proxy
+            return packProvider ?? ClassPackProvider(api, user);
           },
         ),
       ],
@@ -97,10 +111,13 @@ class AuthWrapper extends StatelessWidget {
           return const RegistrationScreen();
         }
 
-        final bool isAuthenticated =
-            authService.cachedToken != null || authService.currentUser != null;
+        // final bool isAuthenticated =
+        //     authService.cachedToken != null || authService.currentUser != null;
+        if (authService.currentUser == null) {
+          return const LoginScreen();
+        }
 
-        return isAuthenticated ? const HomeRouter() : const LoginScreen();
+        return const HomeRouter();
       },
     );
   }
@@ -131,6 +148,8 @@ class _HomeRouterState extends State<HomeRouter> {
     return Consumer<UserProvider>(
       builder: (context, userProvider, _) {
         if (userProvider.loadError != null) {
+          print(
+              '[AuthService] Silent Google sign-in succeeded for ${userProvider.loadError}');
           return Scaffold(
             body: Center(
               child: Column(

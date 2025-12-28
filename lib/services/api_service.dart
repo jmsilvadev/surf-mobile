@@ -2,6 +2,8 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:surf_mobile/config/app_config.dart';
 import 'package:surf_mobile/models/class_model.dart';
+import 'package:surf_mobile/models/class_pack_model.dart';
+import 'package:surf_mobile/models/class_pack_purchase_model.dart';
 import 'package:surf_mobile/models/rental_model.dart';
 import 'package:surf_mobile/models/class_student_model.dart';
 import 'package:surf_mobile/models/equipment_model.dart';
@@ -28,13 +30,14 @@ class ApiService extends ChangeNotifier {
       onRequest: (options, handler) async {
         // allow unauthenticated access to auth endpoints
         final path = options.path;
-        if (path.startsWith('/api/auth')) {
+        if (path == '/api/auth/google') {
           handler.next(options);
           return;
         }
 
         // If we have token attach it
-        if (_authToken != null && !options.headers.containsKey('Authorization')) {
+        if (_authToken != null &&
+            !options.headers.containsKey('Authorization')) {
           options.headers['Authorization'] = 'Bearer $_authToken';
           handler.next(options);
           return;
@@ -59,7 +62,10 @@ class ApiService extends ChangeNotifier {
         handler.reject(DioException(
           requestOptions: options,
           error: 'No authentication token available',
-          response: Response(requestOptions: options, statusCode: 401, data: {'error': 'missing_token'}),
+          response: Response(
+              requestOptions: options,
+              statusCode: 401,
+              data: {'error': 'missing_token'}),
         ));
       },
       onError: (err, handler) async {
@@ -134,6 +140,53 @@ class ApiService extends ChangeNotifier {
     }
   }
 
+  Future<List<ClassPack>> getClassPacks({
+    required int schoolId,
+    bool? featured,
+  }) async {
+    final response = await _dio.get(
+      '/api/class-packs',
+      queryParameters: {
+        'school_id': schoolId,
+        if (featured != null) 'featured': featured,
+      },
+    );
+
+    final data = response.data;
+    if (data is List) {
+      return data.map((e) => ClassPack.fromJson(e)).toList();
+    }
+    if (data is Map && data['list'] is List) {
+      return (data['list'] as List).map((e) => ClassPack.fromJson(e)).toList();
+    }
+    return [];
+  }
+
+  Future<void> purchasePack({
+    required int packId,
+    required int studentId,
+    int quantity = 1,
+  }) async {
+    await _dio.post(
+      '/api/class-packs/$packId/purchase',
+      data: {
+        'student_id': studentId,
+        'quantity': quantity,
+      },
+    );
+  }
+
+  Future<List<ClassPackPurchase>> getStudentPacks(int studentId) async {
+    final response = await _dio.get('/api/students/$studentId/packs');
+
+    if (response.data is List) {
+      return (response.data as List)
+          .map((e) => ClassPackPurchase.fromJson(e))
+          .toList();
+    }
+    return [];
+  }
+
   Future<List<RentalModel>> getRentals() async {
     try {
       final response = await _dio.get('/api/rentals');
@@ -158,7 +211,9 @@ class ApiService extends ChangeNotifier {
         final allRentals = (response.data as List)
             .map((json) => RentalModel.fromJson(json))
             .toList();
-        return allRentals.where((rental) => rental.studentId == studentId).toList();
+        return allRentals
+            .where((rental) => rental.studentId == studentId)
+            .toList();
       }
       return [];
     } catch (e) {
@@ -255,7 +310,8 @@ class ApiService extends ChangeNotifier {
     }
   }
 
-  Future<ClassStudentModel> addStudentToClass(int classId, int studentId) async {
+  Future<ClassStudentModel> addStudentToClass(
+      int classId, int studentId) async {
     try {
       final response = await _dio.post(
         '/api/classes/$classId/students',
@@ -283,7 +339,7 @@ class ApiService extends ChangeNotifier {
 
   Future<UserProfile> getCurrentUserProfile() async {
     try {
-      final response = await _dio.get('/api/auth/me');
+      final response = await _dio.get('/auth/me');
       if (response.data is Map<String, dynamic>) {
         return UserProfile.fromJson(response.data as Map<String, dynamic>);
       }
@@ -306,7 +362,8 @@ class ApiService extends ChangeNotifier {
   }) async {
     try {
       final payload = student.toUpdatePayload(overrideSchoolId: schoolId);
-      final response = await _dio.put('/api/students/${student.id}', data: payload);
+      final response =
+          await _dio.put('/api/students/${student.id}', data: payload);
       if (response.data is Map<String, dynamic>) {
         return StudentProfile.fromJson(response.data as Map<String, dynamic>);
       }

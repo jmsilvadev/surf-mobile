@@ -45,6 +45,7 @@ flutter:
   assets:
     - .env
     - assets/images/logo-oceandojo.png
+    - assets/images/
 
 flutter_launcher_icons:
   android: true
