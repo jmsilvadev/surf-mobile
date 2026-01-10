@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:surf_mobile/helpers/currency_formatter.dart';
 import 'package:surf_mobile/models/class_pack_model.dart';
 
 class PackCard extends StatelessWidget {
@@ -10,7 +11,7 @@ class PackCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final priceText = pack.price != null
-        ? 'R\$ ${pack.price!.toStringAsFixed(2)}'
+        ? CurrencyFormatter.euro(pack.price!)
         : 'Preço indisponível';
 
     return Card(
@@ -21,7 +22,8 @@ class PackCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             ClipRRect(
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(12)),
               child: Image.asset(
                 'assets/images/OceanDojoPacksAula.png',
                 height: 160,
@@ -46,7 +48,7 @@ class PackCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    priceText,
+                    priceText.toString(),
                     style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
@@ -60,15 +62,17 @@ class PackCard extends StatelessWidget {
                     height: 50, // Altura do botão
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                      //  backgroundColor: Colors.deepPurple,
+                        //  backgroundColor: Colors.deepPurple,
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
                       ),
                       onPressed: onTap,
-                      child: const Text('View details',
-                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+                      child: const Text(
+                        'View details',
+                        style: TextStyle(
+                            fontSize: 13, fontWeight: FontWeight.bold),
                       ), // Fechado corretamente aqui
                     ), // Fechado corretamente aqui
                   ),

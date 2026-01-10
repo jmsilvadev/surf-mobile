@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:surf_mobile/providers/class_pack_provider.dart';
+import 'package:surf_mobile/providers/navigation_provider.dart';
 import 'package:surf_mobile/screens/home/home_light_screen.dart';
 import 'package:surf_mobile/services/auth_service.dart';
 import 'package:surf_mobile/screens/calendar_screen.dart';
@@ -69,6 +70,8 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final nav = context.watch<NavigationProvider>();
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('OceanDojo'),
@@ -80,7 +83,7 @@ class _MainScreenState extends State<MainScreen> {
           ),
         ],
       ),
-      body: _screens[_currentIndex],
+      body: _screens[nav.currentIndex],
       bottomNavigationBar: BottomNavigationBar(
         backgroundColor:
             Theme.of(context).bottomNavigationBarTheme.backgroundColor,
@@ -90,9 +93,7 @@ class _MainScreenState extends State<MainScreen> {
             Theme.of(context).bottomNavigationBarTheme.unselectedItemColor,
         currentIndex: _currentIndex,
         onTap: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
+          context.read<NavigationProvider>().setIndex(index);
         },
         items: const [
           BottomNavigationBarItem(

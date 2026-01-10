@@ -5,8 +5,8 @@ class PriceModel {
   final String? description;
   final double amount;
   final bool active;
-  final DateTime createdAt;
-  final DateTime updatedAt;
+  final String createdAt;
+  final String updatedAt;
 
   PriceModel({
     required this.id,
@@ -21,28 +21,14 @@ class PriceModel {
 
   factory PriceModel.fromJson(Map<String, dynamic> json) {
     return PriceModel(
-      id: json['id'] as int,
-      schoolId: json['school_id'] as int,
-      type: json['type'] as String,
-      description: json['description'] as String?,
+      id: json['id'],
+      schoolId: json['school_id'],
+      type: json['type'],
+      description: json['description'],
       amount: (json['amount'] as num).toDouble(),
-      active: json['active'] as bool,
-      createdAt: DateTime.parse(json['created_at'] as String),
-      updatedAt: DateTime.parse(json['updated_at'] as String),
+      active: json['active'],
+      createdAt: json['created_at'],
+      updatedAt: json['updated_at'],
     );
   }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'school_id': schoolId,
-      'type': type,
-      'description': description,
-      'amount': amount,
-      'active': active,
-      'created_at': createdAt.toIso8601String(),
-      'updated_at': updatedAt.toIso8601String(),
-    };
-  }
 }
-

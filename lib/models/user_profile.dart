@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:surf_mobile/models/school_model.dart';
 import 'package:surf_mobile/models/skill_level_model.dart';
 
 class UserAccount {
@@ -29,6 +30,7 @@ class UserAccount {
 class StudentProfile {
   final int id;
   final int schoolId;
+  final School school;
   final String name;
   final String taxNumber;
   final String? phone;
@@ -40,6 +42,7 @@ class StudentProfile {
   const StudentProfile({
     required this.id,
     required this.schoolId,
+    required this.school,
     required this.name,
     required this.taxNumber,
     required this.userId,
@@ -69,6 +72,15 @@ class StudentProfile {
       schoolId: json['school_id'] is int
           ? json['school_id'] as int
           : int.tryParse(json['school_id']?.toString() ?? '0') ?? 0,
+      school: json['school'] is Map<String, dynamic>
+          ? School.fromJson(json['school'] as Map<String, dynamic>)
+          : School(
+              name: '',
+              taxNumber: '',
+              address: '',
+              phone: '',
+              email: '',
+              nis: ''),
       name: json['name']?.toString() ?? '',
       taxNumber: json['tax_number']?.toString() ?? '',
       phone: json['phone']?.toString(),
@@ -85,6 +97,7 @@ class StudentProfile {
 
   StudentProfile copyWith({
     int? schoolId,
+    School? school,
     String? name,
     String? taxNumber,
     String? phone,
@@ -95,6 +108,7 @@ class StudentProfile {
     return StudentProfile(
       id: id,
       schoolId: schoolId ?? this.schoolId,
+      school: school ?? this.school,
       name: name ?? this.name,
       taxNumber: taxNumber ?? this.taxNumber,
       phone: phone ?? this.phone,

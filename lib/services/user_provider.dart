@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:surf_mobile/models/school_model.dart';
 import 'package:surf_mobile/models/user_profile.dart';
 import 'package:surf_mobile/services/api_service.dart';
 import 'package:surf_mobile/services/auth_service.dart';
@@ -19,7 +20,12 @@ class UserProvider extends ChangeNotifier {
   String? get updateError => _updateError;
   bool get isStudent => _profile?.user.userType == 'student';
   int? get studentId => _profile?.student?.id;
+  School get school =>
+      _profile?.student?.school ??
+      School(
+          name: '', taxNumber: '', address: '', phone: '', email: '', nis: '');
   int? get schoolId => _profile?.student?.schoolId;
+
   String? get studentSkillSlug => _profile?.student?.skillLevel?.slug;
 
   void updateDependencies(AuthService auth, ApiService api) {
@@ -52,7 +58,20 @@ class UserProvider extends ChangeNotifier {
 
     try {
       final profile = await _apiService!.getCurrentUserProfile();
-      _profile = profile;
+      final school = _apiService != null &&
+              profile.student != null &&
+              profile.student!.schoolId > 0
+          ? await _apiService!.getSchoolById(profile.student!.schoolId)
+          : School(
+              name: '',
+              taxNumber: '',
+              address: '',
+              phone: '',
+              email: '',
+              nis: '');
+      _profile = profile.copyWith(
+        student: profile.student?.copyWith(school: school),
+      );
     } catch (e) {
       _loadError = 'Não foi possível carregar seu perfil. $e';
     } finally {

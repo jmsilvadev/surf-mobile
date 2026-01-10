@@ -1,94 +1,79 @@
+import 'package:surf_mobile/models/equipment_info_model.dart';
+import 'package:surf_mobile/models/price_class_model.dart';
+import 'package:surf_mobile/models/skill_level_model.dart';
+import 'package:surf_mobile/models/student_class_item_model.dart';
+import 'package:surf_mobile/models/teacher_model.dart';
+
 class ClassModel {
   final int id;
-  final int schoolId;
-  final int teacherId;
-  final int priceId;
   final DateTime startDatetime;
   final DateTime endDatetime;
   final String status;
-  final String? notes;
-  final List<int> studentIds;
-  final List<EquipmentInfo> equipment;
-  final DateTime createdAt;
-  final DateTime updatedAt;
+  final int maxStudents;
+
+  final int teacherId;
+  final TeacherModel teacher;
+
+  final int priceId;
+  final PriceClassModel price;
+
+  final int? skillLevelId;
+  final SkillLevel? skillLevel;
+
+  final List<int>? studentIds;
+  final List<StudentClassItem>? students;
+  final List<EquipmentInfo>? equipments;
 
   ClassModel({
     required this.id,
-    required this.schoolId,
-    required this.teacherId,
-    required this.priceId,
     required this.startDatetime,
     required this.endDatetime,
     required this.status,
-    this.notes,
-    required this.studentIds,
-    required this.equipment,
-    required this.createdAt,
-    required this.updatedAt,
+    required this.maxStudents,
+    required this.teacherId,
+    required this.teacher,
+    required this.priceId,
+    required this.price,
+    this.skillLevelId,
+    this.skillLevel,
+    this.studentIds,
+    this.students,
+    this.equipments,
   });
 
   factory ClassModel.fromJson(Map<String, dynamic> json) {
     return ClassModel(
-      id: json['id'] as int,
-      schoolId: json['school_id'] as int,
-      teacherId: json['teacher_id'] as int,
-      priceId: json['price_id'] as int,
-      startDatetime: DateTime.parse(json['start_datetime'] as String),
-      endDatetime: DateTime.parse(json['end_datetime'] as String),
-      status: json['status'] as String,
-      notes: json['notes'] as String?,
+      id: (json['id'] as num?)?.toInt() ?? 0,
+      startDatetime: DateTime.parse(json['start_datetime']),
+      endDatetime: DateTime.parse(json['end_datetime']),
+      status: json['status'] ?? 'unknown',
+      maxStudents: (json['max_students'] as num?)?.toInt() ?? 0,
+      teacherId: (json['teacher_id'] as num?)?.toInt() ?? 0,
+      teacher: json['teacher'] != null
+          ? TeacherModel.fromJson(json['teacher'])
+          : TeacherModel(name: 'Unknown'),
+      priceId: (json['price_id'] as num?)?.toInt() ?? 0,
+      price: json['price'] != null
+          ? PriceClassModel.fromJson(json['price'])
+          : PriceClassModel(type: 'unknown', amount: 0),
+      skillLevelId: (json['skill_level_id'] as num?)?.toInt(),
+      skillLevel: json['skill_level'] != null
+          ? SkillLevel.fromJson(json['skill_level'])
+          : null,
+      // ✅ AQUI ESTAVA O BUG
       studentIds: (json['student_ids'] as List<dynamic>?)
-              ?.map((e) => e as int)
+              ?.whereType<num>()
+              .map((e) => e.toInt())
               .toList() ??
           [],
-      equipment: (json['equipment'] as List<dynamic>?)
-              ?.map((e) => EquipmentInfo.fromJson(e as Map<String, dynamic>))
+      students: (json['students'] as List<dynamic>?)
+              ?.map((e) => StudentClassItem.fromJson(e))
               .toList() ??
           [],
-      createdAt: DateTime.parse(json['created_at'] as String),
-      updatedAt: DateTime.parse(json['updated_at'] as String),
+      equipments: (json['equipment'] as List<dynamic>?)
+              ?.map((e) => EquipmentInfo.fromJson(e))
+              .toList() ??
+          [],
     );
   }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'school_id': schoolId,
-      'teacher_id': teacherId,
-      'price_id': priceId,
-      'start_datetime': startDatetime.toIso8601String(),
-      'end_datetime': endDatetime.toIso8601String(),
-      'status': status,
-      'notes': notes,
-      'student_ids': studentIds,
-      'equipment': equipment.map((e) => e.toJson()).toList(),
-      'created_at': createdAt.toIso8601String(),
-      'updated_at': updatedAt.toIso8601String(),
-    };
-  }
 }
-
-class EquipmentInfo {
-  final int equipmentId;
-  final int quantity;
-
-  EquipmentInfo({
-    required this.equipmentId,
-    required this.quantity,
-  });
-
-  factory EquipmentInfo.fromJson(Map<String, dynamic> json) {
-    return EquipmentInfo(
-      equipmentId: json['equipmentId'] as int,
-      quantity: json['quantity'] as int,
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'equipmentId': equipmentId,
-      'quantity': quantity,
-    };
-  }
-}
-

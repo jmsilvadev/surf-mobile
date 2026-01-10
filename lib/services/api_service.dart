@@ -4,10 +4,13 @@ import 'package:surf_mobile/config/app_config.dart';
 import 'package:surf_mobile/models/class_model.dart';
 import 'package:surf_mobile/models/class_pack_model.dart';
 import 'package:surf_mobile/models/class_pack_purchase_model.dart';
+import 'package:surf_mobile/models/class_rule_model.dart';
+import 'package:surf_mobile/models/enrollment_validation_model.dart';
 import 'package:surf_mobile/models/rental_model.dart';
 import 'package:surf_mobile/models/class_student_model.dart';
 import 'package:surf_mobile/models/equipment_model.dart';
 import 'package:surf_mobile/models/price_model.dart';
+import 'package:surf_mobile/models/school_model.dart';
 import 'package:surf_mobile/models/user_profile.dart';
 
 class ApiService extends ChangeNotifier {
@@ -109,11 +112,26 @@ class ApiService extends ChangeNotifier {
   Future<List<ClassModel>> getClasses() async {
     try {
       final response = await _dio.get('/api/classes');
-      if (response.data is List) {
-        return (response.data as List)
+
+      if (kDebugMode) {
+        print('RAW /api/classes RESPONSE:');
+        print(response.data);
+      }
+
+      final data = response.data;
+
+      // 🔹 Caso 1: backend retorna lista direta
+      if (data is List) {
+        return data.map((json) => ClassModel.fromJson(json)).toList();
+      }
+
+      // 🔹 Caso 2: backend retorna objeto paginado { items, itemCount }
+      if (data is Map && data['items'] is List) {
+        return (data['items'] as List)
             .map((json) => ClassModel.fromJson(json))
             .toList();
       }
+
       return [];
     } catch (e) {
       if (kDebugMode) {
@@ -162,6 +180,38 @@ class ApiService extends ChangeNotifier {
     return [];
   }
 
+  Future<EnrollmentValidation> getEnrollmentValidation({
+    required int classId,
+    required int studentId,
+  }) async {
+    try {
+      final response = await _dio.get(
+        '/api/classes/$classId/can-enroll',
+        queryParameters: {
+          'student_id': studentId,
+        },
+      );
+
+      if (response.data is Map<String, dynamic>) {
+        return EnrollmentValidation.fromJson(
+          response.data as Map<String, dynamic>,
+        );
+      }
+
+      if (response.data is Map) {
+        final map = Map<String, dynamic>.from(response.data as Map);
+        return EnrollmentValidation.fromJson(map);
+      }
+
+      throw Exception('Unexpected can-enroll response format');
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error validating enrollment: $e');
+      }
+      rethrow;
+    }
+  }
+
   Future<void> purchasePack({
     required int packId,
     required int studentId,
@@ -174,6 +224,25 @@ class ApiService extends ChangeNotifier {
         'quantity': quantity,
       },
     );
+  }
+
+  Future<ClassModel> getClassById(int classId) async {
+    final res = await _dio.get('/api/classes/$classId');
+    return ClassModel.fromJson(res.data);
+  }
+
+  Future<School> getSchoolById(int schoolId) async {
+    final res = await _dio.get('/api/schools/$schoolId');
+    return School.fromJson(res.data);
+  }
+
+  Future<List<ClassRule>> getClassRules(int classId) async {
+    final response = await _dio.get('/api/classes/$classId/rules');
+
+    if (response.data is List) {
+      return (response.data as List).map((e) => ClassRule.fromJson(e)).toList();
+    }
+    return [];
   }
 
   Future<List<ClassPackPurchase>> getStudentPacks(int studentId) async {
@@ -199,6 +268,25 @@ class ApiService extends ChangeNotifier {
     } catch (e) {
       if (kDebugMode) {
         print('Error fetching rentals: $e');
+      }
+      rethrow;
+    }
+  }
+
+  Future<void> enrollStudentInClass({
+    required int classId,
+    required int studentId,
+  }) async {
+    try {
+      await _dio.post(
+        '/api/classes/$classId/enroll',
+        data: {
+          'student_id': studentId,
+        },
+      );
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error enrolling student in class: $e');
       }
       rethrow;
     }

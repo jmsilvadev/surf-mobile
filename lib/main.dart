@@ -3,6 +3,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
 import 'package:surf_mobile/providers/class_pack_provider.dart';
+import 'package:surf_mobile/providers/navigation_provider.dart';
 import 'package:surf_mobile/services/api_service.dart';
 import 'package:surf_mobile/services/auth_service.dart';
 import 'package:surf_mobile/services/navigation_service.dart';
@@ -67,6 +68,7 @@ class MyApp extends StatelessWidget {
             return userProvider;
           },
         ),
+        ChangeNotifierProvider(create: (_) => NavigationProvider()),
         ChangeNotifierProxyProvider2<ApiService, UserProvider,
             ClassPackProvider>(
           create: (context) => ClassPackProvider(

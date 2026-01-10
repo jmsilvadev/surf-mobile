@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:surf_mobile/providers/class_pack_provider.dart';
+import 'package:surf_mobile/providers/navigation_provider.dart';
+import 'package:surf_mobile/widgets/class_reservation_dialog.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:intl/intl.dart';
 import 'package:surf_mobile/services/api_service.dart';
@@ -197,8 +199,12 @@ class _CalendarScreenState extends State<CalendarScreen> {
             const Text('You have no class credits'),
             const SizedBox(height: 12),
             ElevatedButton(
+              style: TextButton.styleFrom(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              ),
               onPressed: () {
-                Navigator.pushNamed(context, '/packs');
+                context.read<NavigationProvider>().setIndex(0);
               },
               child: const Text('Buy a pack'),
             ),
@@ -213,7 +219,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
       itemBuilder: (context, index) {
         final classItem = dayClasses[index];
         final isEnrolled =
-            _studentId != null && classItem.studentIds.contains(_studentId);
+            _studentId != null && classItem.studentIds!.contains(_studentId);
         final canJoin = _studentId != null &&
             !isEnrolled &&
             classItem.status == 'scheduled';
@@ -246,14 +252,14 @@ class _CalendarScreenState extends State<CalendarScreen> {
                       labelStyle: TextStyle(color: Colors.green.shade900),
                     ),
                   ),
-                if (classItem.notes != null && classItem.notes!.isNotEmpty)
-                  Text(
-                    'Notes: ${classItem.notes}',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey.shade600,
-                    ),
-                  ),
+                // if (classItem.notes != null && classItem.notes!.isNotEmpty)
+                //   Text(
+                //     'Notes: ${classItem.notes}',
+                //     style: TextStyle(
+                //       fontSize: 12,
+                //       color: Colors.grey.shade600,
+                //     ),
+                //   ),
               ],
             ),
             trailing: canJoin
@@ -285,21 +291,40 @@ class _CalendarScreenState extends State<CalendarScreen> {
     }
 
     try {
-      final apiService = Provider.of<ApiService>(context, listen: false);
-      await apiService.addStudentToClass(classId, _studentId!);
+      final apiService = context.read<ApiService>();
 
-      if (mounted) {
+      final validation = await apiService.getEnrollmentValidation(
+        classId: classId,
+        studentId: _studentId!,
+      );
+
+      if (!validation.allowed) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Successfully joined the class!')),
+          SnackBar(
+            content: Text(validation.message ?? 'Enrollment not allowed'),
+          ),
         );
-        _loadClasses();
+        return;
       }
+
+      // ✅ Backend autorizou → abre o dialog
+      if (!mounted) return;
+
+      showDialog(
+        context: context,
+        barrierDismissible: false, // força decisão
+        builder: (_) => ClassReservationDialog(
+          classId: classId,
+          studentId: _studentId!,
+          onSuccess: () {
+            _loadClasses(); // atualiza calendário
+          },
+        ),
+      );
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error joining class: $e')),
-        );
-      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error validating enrollment: $e')),
+      );
     }
   }
 
