@@ -3,7 +3,8 @@ class RentalModel {
   final int schoolId;
   final int studentId;
   final int equipmentId;
-  final int priceId;
+  final int equipmentPriceId;
+  final double amountSnapshot;
   final DateTime startDate;
   final DateTime endDate;
   final int quantity;
@@ -17,7 +18,8 @@ class RentalModel {
     required this.schoolId,
     required this.studentId,
     required this.equipmentId,
-    required this.priceId,
+    required this.equipmentPriceId,
+    required this.amountSnapshot,
     required this.startDate,
     required this.endDate,
     required this.quantity,
@@ -33,7 +35,8 @@ class RentalModel {
       schoolId: json['school_id'] as int,
       studentId: json['student_id'] as int,
       equipmentId: json['equipment_id'] as int,
-      priceId: json['price_id'] as int,
+      equipmentPriceId: json['equipment_price_id'] as int,
+      amountSnapshot: (json['amount_snapshot'] as num).toDouble(),
       startDate: DateTime.parse(json['start_date'] as String),
       endDate: DateTime.parse(json['end_date'] as String),
       quantity: json['quantity'] as int,
@@ -50,7 +53,8 @@ class RentalModel {
       'school_id': schoolId,
       'student_id': studentId,
       'equipment_id': equipmentId,
-      'price_id': priceId,
+      'equipment_price_id': equipmentPriceId,
+      'amount_snapshot': amountSnapshot,
       'start_date': startDate.toIso8601String(),
       'end_date': endDate.toIso8601String(),
       'quantity': quantity,
@@ -61,4 +65,3 @@ class RentalModel {
     };
   }
 }
-

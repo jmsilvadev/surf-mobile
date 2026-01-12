@@ -34,7 +34,9 @@ class UserProvider extends ChangeNotifier {
 
     final bool isLoggedOut =
         auth.cachedToken == null && auth.currentUser == null;
+
     if (isLoggedOut) {
+      api.setAuthToken(null); // ✅ só limpa no logout
       _profile = null;
       _loadError = null;
       _updateError = null;
@@ -44,8 +46,12 @@ class UserProvider extends ChangeNotifier {
       return;
     }
 
-    // If we have not loaded the profile yet and have an auth token, trigger load.
-    if (!_hasAttemptedLoad && !_isLoading && auth.cachedToken != null) {
+    // ✅ injeta token corretamente
+    if (auth.cachedToken != null) {
+      api.setAuthToken(auth.cachedToken);
+    }
+
+    if (!_hasAttemptedLoad && !_isLoading) {
       ensureProfileLoaded();
     }
   }

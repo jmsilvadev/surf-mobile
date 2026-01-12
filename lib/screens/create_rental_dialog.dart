@@ -27,7 +27,8 @@ class _CreateRentalDialogState extends State<CreateRentalDialog> {
   int _quantity = 1;
   final _notesController = TextEditingController();
   List<EquipmentModel> _equipmentList = [];
-  Map<int, PriceModel> _equipmentPrices = {}; // Maps equipment school_id to price
+  Map<int, PriceModel> _equipmentPrices =
+      {}; // Maps equipment school_id to price
   bool _isLoading = false;
   bool _loadingData = true;
 
@@ -49,7 +50,7 @@ class _CreateRentalDialogState extends State<CreateRentalDialog> {
       // First get prices with type "equipment".
       final prices = await apiService.getPrices(type: 'equipment');
       final activePrices = prices.where((p) => p.active).toList();
-      
+
       if (activePrices.isEmpty) {
         if (mounted) {
           setState(() {
@@ -61,7 +62,7 @@ class _CreateRentalDialogState extends State<CreateRentalDialog> {
         }
         return;
       }
-      
+
       // Create a map of school_id to price (use first available price per school).
       final priceMap = <int, PriceModel>{};
       for (var price in activePrices) {
@@ -69,15 +70,15 @@ class _CreateRentalDialogState extends State<CreateRentalDialog> {
           priceMap[price.schoolId] = price;
         }
       }
-      
+
       // Then get equipment and filter by schools that have equipment prices.
       final equipment = await apiService.getEquipment();
       final availableEquipment = equipment.where((e) {
-        return e.active && 
-               e.availableQuantity > 0 && 
-               priceMap.containsKey(e.schoolId);
+        return e.active &&
+            e.availableQuantity > 0 &&
+            priceMap.containsKey(e.schoolId);
       }).toList();
-      
+
       if (mounted) {
         setState(() {
           _equipmentList = availableEquipment;
@@ -151,7 +152,6 @@ class _CreateRentalDialogState extends State<CreateRentalDialog> {
         schoolId: widget.schoolId,
         studentId: widget.studentId,
         equipmentId: _selectedEquipment!.id,
-        priceId: price.id,
         startDate: _startDate!,
         endDate: _endDate!,
         quantity: _quantity,
@@ -244,12 +244,14 @@ class _CreateRentalDialogState extends State<CreateRentalDialog> {
                             ),
                             child: Row(
                               children: [
-                                const Icon(Icons.info_outline, color: Colors.blue),
+                                const Icon(Icons.info_outline,
+                                    color: Colors.blue),
                                 const SizedBox(width: 8),
                                 Expanded(
                                   child: Text(
                                     'Price: \$${(_equipmentPrices[_selectedEquipment!.schoolId]?.amount ?? 0).toStringAsFixed(2)}',
-                                    style: const TextStyle(fontWeight: FontWeight.bold),
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.bold),
                                   ),
                                 ),
                               ],
@@ -270,7 +272,8 @@ class _CreateRentalDialogState extends State<CreateRentalDialog> {
                                 ),
                                 child: Text(
                                   _startDate != null
-                                      ? DateFormat('MMM dd, yyyy').format(_startDate!)
+                                      ? DateFormat('MMM dd, yyyy')
+                                          .format(_startDate!)
                                       : 'Select date',
                                 ),
                               ),
@@ -288,7 +291,8 @@ class _CreateRentalDialogState extends State<CreateRentalDialog> {
                                 ),
                                 child: Text(
                                   _endDate != null
-                                      ? DateFormat('MMM dd, yyyy').format(_endDate!)
+                                      ? DateFormat('MMM dd, yyyy')
+                                          .format(_endDate!)
                                       : 'Select date',
                                 ),
                               ),
@@ -321,7 +325,8 @@ class _CreateRentalDialogState extends State<CreateRentalDialog> {
                           if (qty == null || qty < 1) {
                             return 'Quantity must be at least 1.';
                           }
-                          if (_selectedEquipment != null && qty > _selectedEquipment!.availableQuantity) {
+                          if (_selectedEquipment != null &&
+                              qty > _selectedEquipment!.availableQuantity) {
                             return 'Quantity exceeds available equipment.';
                           }
                           return null;
@@ -360,4 +365,3 @@ class _CreateRentalDialogState extends State<CreateRentalDialog> {
     );
   }
 }
-

@@ -1,15 +1,21 @@
+import 'dart:convert';
+
+import 'package:collection/collection.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:surf_mobile/config/app_config.dart';
+import 'package:surf_mobile/models/EquipmentWithPrice.dart';
 import 'package:surf_mobile/models/class_model.dart';
 import 'package:surf_mobile/models/class_pack_model.dart';
 import 'package:surf_mobile/models/class_pack_purchase_model.dart';
 import 'package:surf_mobile/models/class_rule_model.dart';
 import 'package:surf_mobile/models/enrollment_validation_model.dart';
+import 'package:surf_mobile/models/equipment_price_model.dart';
 import 'package:surf_mobile/models/rental_model.dart';
 import 'package:surf_mobile/models/class_student_model.dart';
 import 'package:surf_mobile/models/equipment_model.dart';
 import 'package:surf_mobile/models/price_model.dart';
+import 'package:surf_mobile/models/rental_receipt_model.dart';
 import 'package:surf_mobile/models/school_model.dart';
 import 'package:surf_mobile/models/user_profile.dart';
 
@@ -29,6 +35,7 @@ class ApiService extends ChangeNotifier {
       },
     ));
     // Interceptor: attach token; if missing, try to refresh via callback before request.
+    print('🌐 BASE URL = ${_dio.options.baseUrl}');
     _dio.interceptors.add(InterceptorsWrapper(
       onRequest: (options, handler) async {
         // allow unauthenticated access to auth endpoints
@@ -46,6 +53,8 @@ class ApiService extends ChangeNotifier {
           return;
         }
 
+        print('➡️ REQUEST ${options.path}');
+        print('➡️ AUTH HEADER ${options.headers['Authorization']}');
         // No token: try to refresh via callback if provided
         if (_tokenRefreshCallback != null) {
           try {
@@ -256,6 +265,61 @@ class ApiService extends ChangeNotifier {
     return [];
   }
 
+  Future<List<EquipmentWithPrice>> getAvailableEquipments() async {
+    print('🌐 FULL URL = ${_dio.options.baseUrl}/api/equipment');
+    debugPrint('🔑 TOKEN: ${_dio.options.headers['Authorization']}');
+    final equipments = await getEquipment(); // List<EquipmentModel>
+    final prices = await getEquipmentPrices(); // List<EquipmentWithPrice>
+
+    final result = <EquipmentWithPrice>[];
+
+    for (final eq in equipments) {
+      if (!eq.active) continue;
+
+      final price =
+          prices.firstWhereOrNull((p) => p.equipmentId == eq.id && p.active!);
+
+      if (price == null) continue;
+
+      result.add(
+        EquipmentWithPrice.fromEquipment(
+          equipment: eq,
+          amount: price.amount,
+          priceModel: price.priceModel,
+        ),
+      );
+    }
+
+    return result;
+  }
+
+  Future<List<EquipmentPrice>> getEquipmentPrices() async {
+    print('🌐 FULL URL = ${_dio.options.baseUrl}/api/equipment-prices');
+    debugPrint('🔑 TOKEN: ${_dio.options.headers['Authorization']}');
+
+    final response = await _dio.get('/api/equipment-prices');
+    final data = response.data;
+
+    // ✅ Caso ideal: já é uma lista
+    if (data is List) {
+      return data.map((e) => EquipmentPrice.fromJson(e)).toList();
+    }
+
+    // 🔥 Caso atual: backend manda JSON como String
+    if (data is String) {
+      final decoded = jsonDecode(data);
+
+      if (decoded is List) {
+        return decoded.map((e) => EquipmentPrice.fromJson(e)).toList();
+      }
+    }
+
+    debugPrint('Unexpected equipment-prices response: $data');
+    return [];
+
+    // Fallback
+  }
+
   Future<List<RentalModel>> getRentals() async {
     try {
       final response = await _dio.get('/api/rentals');
@@ -312,35 +376,42 @@ class ApiService extends ChangeNotifier {
     }
   }
 
+  Future<RentalReceipt> getRentalReceipt(List<int> rentalIds) async {
+    final response = await _dio.post(
+      '/api/rentals/receipt',
+      data: {'rental_ids': rentalIds},
+    );
+
+    return RentalReceipt.fromJson(response.data);
+  }
+
   Future<RentalModel> createRental({
     required int schoolId,
     required int studentId,
     required int equipmentId,
-    required int priceId,
+    int quantity = 1,
     required DateTime startDate,
     required DateTime endDate,
-    int quantity = 1,
     String? notes,
   }) async {
     try {
-      final response = await _dio.post(
-        '/api/rentals',
-        data: {
-          'school_id': schoolId,
-          'student_id': studentId,
-          'equipment_id': equipmentId,
-          'price_id': priceId,
-          'start_date': startDate.toIso8601String(),
-          'end_date': endDate.toIso8601String(),
-          'quantity': quantity,
-          if (notes != null && notes.isNotEmpty) 'notes': notes,
-        },
-      );
+      final payload = <String, dynamic>{
+        'school_id': schoolId,
+        'student_id': studentId,
+        'equipment_id': equipmentId,
+        'quantity': quantity,
+        'start_date': startDate.toIso8601String(),
+        'end_date': endDate.toIso8601String(),
+        if (notes != null && notes.isNotEmpty) 'notes': notes,
+      };
+
+      print('CREATE RENTAL na api: ${payload.values}');
+      final response = await _dio.post('/api/rentals', data: payload);
       return RentalModel.fromJson(response.data);
-    } catch (e) {
-      if (kDebugMode) {
-        print('Error creating rental: $e');
-      }
+    } on DioException catch (e) {
+      print('❌ STATUS: ${e.response?.statusCode}');
+      print('❌ DATA: ${e.response?.data}');
+      // print('❌ PAYLOAD ENVIADO: ${payload.values}');
       rethrow;
     }
   }

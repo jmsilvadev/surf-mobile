@@ -17,7 +17,7 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
-  int _currentIndex = 0;
+  // int _currentIndex = 0;
 
   final List<Widget> _screens = [
     const HomeLightScreen(),
@@ -50,6 +50,7 @@ class _MainScreenState extends State<MainScreen> {
     if (!mounted) return;
 
     if (confirmed == true) {
+      context.read<NavigationProvider>().reset();
       final authService = Provider.of<AuthService>(context, listen: false);
       await authService.signOut();
     }
@@ -91,7 +92,7 @@ class _MainScreenState extends State<MainScreen> {
             Theme.of(context).bottomNavigationBarTheme.selectedItemColor,
         unselectedItemColor:
             Theme.of(context).bottomNavigationBarTheme.unselectedItemColor,
-        currentIndex: _currentIndex,
+        currentIndex: nav.currentIndex,
         onTap: (index) {
           context.read<NavigationProvider>().setIndex(index);
         },

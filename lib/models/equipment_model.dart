@@ -3,6 +3,7 @@ class EquipmentModel {
   final int schoolId;
   final String name;
   final String type;
+  final String? photoURL;
   final String? description;
   final int totalQuantity;
   final int availableQuantity;
@@ -15,6 +16,7 @@ class EquipmentModel {
     required this.schoolId,
     required this.name,
     required this.type,
+    this.photoURL,
     this.description,
     required this.totalQuantity,
     required this.availableQuantity,
@@ -29,6 +31,7 @@ class EquipmentModel {
       schoolId: json['school_id'] as int,
       name: json['name'] as String,
       type: json['type'] as String,
+      photoURL: json['photo_url'],
       description: json['description'] as String?,
       totalQuantity: json['total_quantity'] as int,
       availableQuantity: json['available_quantity'] as int,
@@ -44,6 +47,7 @@ class EquipmentModel {
       'school_id': schoolId,
       'name': name,
       'type': type,
+      'photo_url': photoURL,
       'description': description,
       'total_quantity': totalQuantity,
       'available_quantity': availableQuantity,
@@ -53,4 +57,3 @@ class EquipmentModel {
     };
   }
 }
-
