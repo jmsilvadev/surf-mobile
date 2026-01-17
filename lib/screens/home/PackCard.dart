@@ -14,6 +14,8 @@ class PackCard extends StatelessWidget {
         ? CurrencyFormatter.euro(pack.price!)
         : 'Preço indisponível';
 
+    print(pack.heroImageUrl);
+
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
       child: InkWell(
@@ -24,8 +26,8 @@ class PackCard extends StatelessWidget {
             ClipRRect(
               borderRadius:
                   const BorderRadius.vertical(top: Radius.circular(12)),
-              child: Image.asset(
-                'assets/images/OceanDojoPacksAula.png',
+              child: Image.network(
+                pack.heroImageUrl!,
                 height: 160,
                 cacheHeight: 320,
                 width: double.infinity,

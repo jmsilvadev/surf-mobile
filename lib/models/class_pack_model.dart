@@ -1,4 +1,3 @@
-import 'package:surf_mobile/config/app_config.dart';
 import 'package:surf_mobile/models/skill_level_model.dart';
 
 class ClassPack {
@@ -53,9 +52,10 @@ class ClassPack {
       includesInsurance: json['includes_insurance'] ?? false,
       featured: json['featured'] ?? false,
       featuredOrder: json['featured_order'] ?? 0,
-      heroImageUrl: json['hero_image_url'] != null
-          ? '${AppConfig.apiBaseUrl}${json['hero_image_url']}'
-          : null,
+      // heroImageUrl: json['hero_image_url'] != null
+      //     ? '${AppConfig.apiBaseUrl}${json['hero_image_url']}'
+      //     : null,
+      heroImageUrl: json['hero_image_url'] ?? '',
       benefits: (json['benefits'] as List?)?.cast<String>() ?? [],
       skillLevel: json['skill_level'] != null
           ? SkillLevel.fromJson(json['skill_level'])

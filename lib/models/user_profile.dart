@@ -35,6 +35,7 @@ class StudentProfile {
   final String taxNumber;
   final String? phone;
   final DateTime? birthDate;
+  final String? photoUrl;
   final String userId;
   final bool active;
   final SkillLevel? skillLevel;
@@ -49,6 +50,7 @@ class StudentProfile {
     required this.active,
     this.phone,
     this.birthDate,
+    this.photoUrl,
     this.skillLevel,
   });
 
@@ -85,6 +87,7 @@ class StudentProfile {
       taxNumber: json['tax_number']?.toString() ?? '',
       phone: json['phone']?.toString(),
       birthDate: parsedDate,
+      photoUrl: json['photo_url']?.toString(),
       userId: json['user_id']?.toString() ?? '',
       active: json['active'] is bool
           ? json['active'] as bool
@@ -102,6 +105,7 @@ class StudentProfile {
     String? taxNumber,
     String? phone,
     DateTime? birthDate,
+    String? photoUrl,
     bool? active,
     SkillLevel? skillLevel,
   }) {
@@ -113,6 +117,7 @@ class StudentProfile {
       taxNumber: taxNumber ?? this.taxNumber,
       phone: phone ?? this.phone,
       birthDate: birthDate ?? this.birthDate,
+      photoUrl: photoUrl ?? this.photoUrl,
       userId: userId,
       active: active ?? this.active,
       skillLevel: skillLevel ?? this.skillLevel,
@@ -126,6 +131,7 @@ class StudentProfile {
       'tax_number': taxNumber,
       'phone': phone,
       'birth_date': birthDate?.toIso8601String(),
+      'photo_url': photoUrl,
       'active': active,
     };
   }

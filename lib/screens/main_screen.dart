@@ -8,6 +8,7 @@ import 'package:surf_mobile/screens/calendar_screen.dart';
 import 'package:surf_mobile/screens/registrations_screen.dart';
 import 'package:surf_mobile/screens/rentals_screen.dart';
 import 'package:surf_mobile/services/user_provider.dart';
+import 'package:surf_mobile/widgets/user_avatar.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -77,6 +78,20 @@ class _MainScreenState extends State<MainScreen> {
       appBar: AppBar(
         title: const Text('OceanDojo'),
         actions: [
+          Consumer<UserProvider>(
+            builder: (context, userProvider, _) {
+              final student = userProvider.profile?.student;
+
+              return Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: UserAvatar(
+                  photoUrl: student?.photoUrl,
+                  name: student?.name,
+                  radius: 18,
+                ),
+              );
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: _handleLogout,

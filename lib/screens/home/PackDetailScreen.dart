@@ -29,8 +29,42 @@ class _PackDetailScreenState extends State<PackDetailScreen> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          Image.asset('assets/images/OceanDojoPacksAula.png',
-              height: 200, fit: BoxFit.cover),
+          // Substitua o Image.network original por este:
+          widget.pack.heroImageUrl != null &&
+                  widget.pack.heroImageUrl!.isNotEmpty
+              ? ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Image.network(
+                    widget.pack.heroImageUrl!,
+                    height: 200,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                    // Exibe algo enquanto a imagem carrega
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) return child;
+                      return Container(
+                        height: 200,
+                        color: Colors.grey[200],
+                        child: const Center(child: CircularProgressIndicator()),
+                      );
+                    },
+                    // Caso a URL seja inválida ou falhe a conexão
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        height: 200,
+                        color: Colors.grey[300],
+                        child: const Icon(Icons.broken_image,
+                            size: 50, color: Colors.grey),
+                      );
+                    },
+                  ),
+                )
+              : Container(
+                  height: 200,
+                  color: Colors.grey[300],
+                  child: const Icon(Icons.image_not_supported,
+                      size: 50, color: Colors.grey),
+                ),
           const SizedBox(height: 16),
           Text(widget.pack.description ?? ''),
           const SizedBox(height: 16),
