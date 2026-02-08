@@ -16,12 +16,23 @@ class SkillLevel {
 
   factory SkillLevel.fromJson(Map<String, dynamic> json) {
     return SkillLevel(
-      slug: json['slug'],
-      name: json['name'],
-      description: json['description'],
+      slug: json['slug'] ?? '',
+      name: json['name'] ?? '',
+      description: json['description'] ?? '',
       minAge: json['min_age'],
       maxAge: json['max_age'],
       defaultForNew: json['default_for_new'] ?? false,
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'slug': slug,
+      'name': name,
+      'description': description,
+      'min_age': minAge,
+      'max_age': maxAge,
+      'default_for_new': defaultForNew,
+    };
   }
 }

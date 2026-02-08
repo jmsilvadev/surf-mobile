@@ -52,26 +52,26 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  Future<void> _signInWithGoogle() async {
-    if (mounted) {
-      setState(() {
-        _isLoading = true;
-        _errorMessage = null;
-      });
-    }
+  // Future<void> _signInWithGoogle() async {
+  //   if (mounted) {
+  //     setState(() {
+  //       _isLoading = true;
+  //       _errorMessage = null;
+  //     });
+  //   }
 
-    try {
-      final authService = Provider.of<AuthService>(context, listen: false);
-      await authService.signInWithGoogle();
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _errorMessage = e.toString();
-          _isLoading = false;
-        });
-      }
-    }
-  }
+  //   try {
+  //     final authService = Provider.of<AuthService>(context, listen: false);
+  //     await authService.signInWithGoogle();
+  //   } catch (e) {
+  //     if (mounted) {
+  //       setState(() {
+  //         _errorMessage = e.toString();
+  //         _isLoading = false;
+  //       });
+  //     }
+  //   }
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -197,15 +197,15 @@ class _LoginScreenState extends State<LoginScreen> {
                       Expanded(child: Divider(color: Colors.grey.shade300)),
                     ],
                   ),
-                  const SizedBox(height: 16),
-                  OutlinedButton.icon(
-                    onPressed: _isLoading ? null : _signInWithGoogle,
-                    icon: const Icon(Icons.g_mobiledata, size: 24),
-                    label: const Text('Sign in with Google'),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                    ),
-                  ),
+                  // const SizedBox(height: 16),
+                  // OutlinedButton.icon(
+                  //   onPressed: _isLoading ? null : _signInWithGoogle,
+                  //   icon: const Icon(Icons.g_mobiledata, size: 24),
+                  //   label: const Text('Sign in with Google'),
+                  //   style: OutlinedButton.styleFrom(
+                  //     padding: const EdgeInsets.symmetric(vertical: 16),
+                  //   ),
+                  // ),
                 ],
               ),
             ),

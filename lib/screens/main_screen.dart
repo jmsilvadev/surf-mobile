@@ -57,7 +57,6 @@ class _MainScreenState extends State<MainScreen> {
     }
   }
 
-  // Exemplo de onde chamar o carregamento
   @override
   void initState() {
     super.initState();
@@ -80,7 +79,7 @@ class _MainScreenState extends State<MainScreen> {
         actions: [
           Consumer<UserProvider>(
             builder: (context, userProvider, _) {
-              final student = userProvider.profile?.student;
+              final student = userProvider.profile;
 
               return Padding(
                 padding: const EdgeInsets.only(right: 8),

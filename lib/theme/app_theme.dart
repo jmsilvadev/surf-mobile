@@ -21,7 +21,7 @@ class AppTheme {
 
   static final ThemeData themeData = ThemeData(
     colorScheme: colorScheme,
-    useMaterial3: true,
+    useMaterial3: false,
     scaffoldBackgroundColor: AppColors.sandBackground,
     textTheme: const TextTheme(
       displayLarge: TextStyle(color: AppColors.primaryBlue),

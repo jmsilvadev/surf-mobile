@@ -240,7 +240,7 @@ class _RentalsScreenState extends State<RentalsScreen> {
     final apiReceipt = await api.getRentalReceipt(ids);
 
     //final user = context.read<UserProvider>();
-    final student = user.profile!.student!;
+    final student = user.profile!;
     //final school = student.school;
 
 // 🧾 Receipt FINAL (igual ao frontend)

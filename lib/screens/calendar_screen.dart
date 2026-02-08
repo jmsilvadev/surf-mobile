@@ -189,6 +189,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
     }
 
     final packProvider = context.watch<ClassPackProvider>();
+    // debugPrint(
+    //     '🔔 Verificando créditos para exibir aulas - availableLessons=${packProvider.availableLessons}');
+
     if (!packProvider.hasCredits) {
       return Center(
         child: Column(
@@ -283,6 +286,10 @@ class _CalendarScreenState extends State<CalendarScreen> {
   }
 
   Future<void> _joinClass(int classId) async {
+    final userProvider = context.read<UserProvider>();
+    final student = userProvider.profile!;
+    final school = userProvider.school;
+
     if (_studentId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Student ID not found.')),
@@ -312,12 +319,15 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
       showDialog(
         context: context,
-        barrierDismissible: false, // força decisão
+        barrierDismissible: false,
         builder: (_) => ClassReservationDialog(
           classId: classId,
           studentId: _studentId!,
+          schoolName: school?.name ?? 'Ocean Dojo School',
+          studentName: student.name,
+          studentLevel: student.skillLevel?.name ?? '',
           onSuccess: () {
-            _loadClasses(); // atualiza calendário
+            _loadClasses();
           },
         ),
       );

@@ -6,6 +6,8 @@ import 'dart:math' show min;
 import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:surf_mobile/config/app_config.dart';
+import 'package:surf_mobile/models/auth_session_model.dart';
+import 'package:surf_mobile/services/api_service.dart';
 import 'package:surf_mobile/services/navigation_service.dart';
 
 class AuthService extends ChangeNotifier {
@@ -22,139 +24,250 @@ class AuthService extends ChangeNotifier {
 
   User? get currentUser => _currentUser;
   bool get isLoading => _isLoading;
+  final ApiService apiService;
 
-  AuthService() {
+  AuthService(this.apiService) {
     _initAuth();
   }
 
+  AuthSession? _session;
+  AuthSession? get session => _session;
+
+  String get userName =>
+      _session?.profile?.name ?? _session?.user.email ?? 'User';
+
+  String? get role => _session?.user.role;
+
+  int? get schoolId => _session?.school?.id;
+
+  // Future<void> _initAuth() async {
+  //   // Listen to auth state changes and token changes to keep stored token in sync.
+  //   _auth.authStateChanges().listen((User? user) async {
+  //     _currentUser = user;
+
+  //     if (user != null) {
+  //       // Load server JWT from preferences if present. Do NOT treat Firebase id_token
+  //       // as the server JWT here to avoid sending Google id_tokens to protected endpoints.
+  //       _session = await _loadSession();
+
+  //       final prefs = await SharedPreferences.getInstance();
+  //       // final stored = prefs.getString('auth_token');
+  //       final jwt = prefs.getString('auth_token');
+  //       final rawSession = prefs.getString('auth-session');
+
+  //       if (jwt != null && rawSession != null) {
+  //         _token = jwt;
+  //         _session = AuthSession.fromJson(jsonDecode(rawSession));
+  //       }
+  //     } else {
+  //       _token = null;
+  //       await _clearToken();
+  //     }
+  //     _isLoading = false;
+  //     notifyListeners();
+  //     _auth.authStateChanges().listen((User? user) {
+  //       _currentUser = user;
+  //       notifyListeners();
+  //     });
+  //   });
+
+  //   // Also listen to id token refreshes. Do not overwrite server JWT with Firebase id tokens.
+  //   _auth.idTokenChanges().listen((User? user) async {
+  //     // Keep current server token in place; notify listeners so UI can react to auth state.
+  //     // notifyListeners();
+  //   });
+  // }
   Future<void> _initAuth() async {
-    // Listen to auth state changes and token changes to keep stored token in sync.
     _auth.authStateChanges().listen((User? user) async {
       _currentUser = user;
 
-      if (user != null) {
-        // Load server JWT from preferences if present. Do NOT treat Firebase id_token
-        // as the server JWT here to avoid sending Google id_tokens to protected endpoints.
-        final prefs = await SharedPreferences.getInstance();
-        final stored = prefs.getString('auth_token');
-        _token = stored;
-      } else {
+      final prefs = await SharedPreferences.getInstance();
+
+      if (user == null) {
         _token = null;
-        await _clearToken();
+        _session = null;
+        apiService.setAuthToken(null);
+        await prefs.remove('auth_token');
+        await prefs.remove('auth-session');
+        _isLoading = false;
+        notifyListeners();
+        return;
       }
+
+      // 🔹 tenta restaurar sessão local
+      final jwt = prefs.getString('auth_token');
+      final rawSession = prefs.getString('auth-session');
+
+      if (jwt != null && rawSession != null) {
+        _token = jwt;
+        _session = AuthSession.fromJson(jsonDecode(rawSession));
+        apiService.setAuthToken(jwt);
+        _isLoading = false;
+        notifyListeners();
+        return;
+      }
+
+      // 🔥 Firebase autenticado, mas backend NÃO
+      debugPrint('🔁 Firebase logado, trocando idToken com backend');
+
+      final firebaseIdToken = await user.getIdToken(true);
+
+      final dio = Dio(BaseOptions(baseUrl: AppConfig.apiBaseUrl));
+      final resp = await dio.post(
+        '/api/auth/login',
+        data: {'id_token': firebaseIdToken},
+      );
+
+      final data = resp.data as Map<String, dynamic>;
+      final jwtBackend = data['token'];
+
+      if (jwtBackend == null) {
+        throw Exception('Backend não retornou token');
+      }
+
+      _token = jwtBackend;
+      _session = AuthSession.fromJson(data);
+      apiService.setAuthToken(jwtBackend);
+
+      await prefs.setString('auth_token', jwtBackend);
+      await prefs.setString('auth-session', jsonEncode(data));
+
       _isLoading = false;
       notifyListeners();
-    });
-
-    // Also listen to id token refreshes. Do not overwrite server JWT with Firebase id tokens.
-    _auth.idTokenChanges().listen((User? user) async {
-      // Keep current server token in place; notify listeners so UI can react to auth state.
-      // notifyListeners();
     });
   }
 
   String? get cachedToken => _token;
   bool get pendingRegistration => _pendingRegistration;
 
-  Future<String?> getIdToken({bool force = false}) async {
-    // Return cached server JWT if available and not forced
-    try {
-      if (!force && _token != null) {
-        if (kDebugMode) print('[AuthService] Returning cached server JWT');
-        return _token;
-      }
-
-      // Try to load from prefs
-      final prefs = await SharedPreferences.getInstance();
-      final stored = prefs.getString('auth_token');
-      if (!force && stored != null) {
-        if (kDebugMode)
-          print('[AuthService] Loaded server JWT from SharedPreferences');
-        _token = stored;
-        return stored;
-      }
-
-      // If user is not signed in, return stored or null
-      if (_currentUser == null) {
-        if (kDebugMode)
-          print('[AuthService] No current Firebase user; cannot refresh JWT');
-        _token = stored;
-        return _token;
-      }
-
-      // We need to exchange Google id_token with backend to obtain server JWT.
-      // Try to use cached google id token, otherwise try silent sign-in to refresh it.
-      String? gid = _googleIdToken;
-      if (gid == null) {
-        try {
-          if (kDebugMode)
-            print(
-                '[AuthService] No cached Google id_token; attempting silent sign-in');
-          final googleUser = await _googleSignIn.signInSilently();
-          if (googleUser != null) {
-            final googleAuth = await googleUser.authentication;
-            gid = googleAuth.idToken;
-            _googleIdToken = gid;
-            if (kDebugMode && gid != null)
-              _logJwtDebug('Silent sign-in id_token', gid);
-          }
-        } catch (_) {
-          // ignore
-        }
-      }
-
-      if (gid == null) {
-        // fallback: try Firebase id token (might be acceptable for some backends)
-        try {
-          if (kDebugMode)
-            print(
-                '[AuthService] Falling back to Firebase id_token for exchange');
-          final firebaseToken = await _currentUser!.getIdToken(force);
-          gid = firebaseToken;
-          if (kDebugMode && gid != null)
-            _logJwtDebug('Firebase fallback id_token', gid);
-        } catch (_) {
-          gid = null;
-        }
-      }
-
-      if (gid == null) return null;
-
-      try {
-        final dio = Dio(BaseOptions(baseUrl: AppConfig.apiBaseUrl));
-        if (kDebugMode) _logJwtDebug('Exchanging id_token', gid);
-        final resp =
-            await dio.post('/api/auth/google', data: {'id_token': gid});
-        String? jwt;
-        if (resp.data is String) {
-          jwt = resp.data as String;
-        } else if (resp.data is Map) {
-          final map = resp.data as Map;
-          jwt = map['token'] ??
-              map['access_token'] ??
-              map['jwt'] ??
-              map['token']?.toString();
-        }
-        if (jwt == null) {
-          throw Exception('Invalid auth response: ${resp.data}');
-        }
-        _token = jwt;
-        await _saveToken(jwt);
-        return jwt;
-      } on DioException catch (e) {
-        if (kDebugMode)
-          print(
-              'Error exchanging Google id_token: ${e.response?.statusCode} ${e.response?.data}');
-        return null;
-      } catch (e) {
-        if (kDebugMode) print('Error exchanging Google id_token: $e');
-        return null;
-      }
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
+  Future<String?> getIdToken() async {
+    return _token;
   }
+
+  Future<void> forceLogout() async {
+    _token = null;
+    _session = null;
+    _currentUser = null;
+
+    await FirebaseAuth.instance.signOut();
+
+    notifyListeners();
+
+    // NavigationService.navigatorKey.currentState
+    //     ?.pushNamedAndRemoveUntil('/login', (_) => false);
+  }
+
+  // Future<String?> getIdToken({bool force = false}) async {
+  //   // Return cached server JWT if available and not forced
+  //   try {
+  //     if (!force && _token != null) {
+  //       if (kDebugMode) print('[AuthService] Returning cached server JWT');
+  //       return _token;
+  //     }
+
+  //     // Try to load from prefs
+  //     final prefs = await SharedPreferences.getInstance();
+  //     final stored = prefs.getString('auth_token');
+  //     if (!force && stored != null) {
+  //       if (kDebugMode)
+  //         print('[AuthService] Loaded server JWT from SharedPreferences');
+  //       _token = stored;
+  //       return stored;
+  //     }
+
+  //     // If user is not signed in, return stored or null
+  //     if (_currentUser == null) {
+  //       if (kDebugMode)
+  //         print('[AuthService] No current Firebase user; cannot refresh JWT');
+  //       _token = stored;
+  //       return _token;
+  //     }
+
+  //     // We need to exchange Google id_token with backend to obtain server JWT.
+  //     // Try to use cached google id token, otherwise try silent sign-in to refresh it.
+  //     String? gid = _googleIdToken;
+  //     if (gid == null) {
+  //       try {
+  //         if (kDebugMode)
+  //           print(
+  //               '[AuthService] No cached Google id_token; attempting silent sign-in');
+  //         final googleUser = await _googleSignIn.signInSilently();
+  //         if (googleUser != null) {
+  //           final googleAuth = await googleUser.authentication;
+  //           gid = googleAuth.idToken;
+  //           _googleIdToken = gid;
+  //           if (kDebugMode && gid != null)
+  //             _logJwtDebug('Silent sign-in id_token', gid);
+  //         }
+  //       } catch (_) {
+  //         // ignore
+  //       }
+  //     }
+
+  //     if (gid == null) {
+  //       // fallback: try Firebase id token (might be acceptable for some backends)
+  //       try {
+  //         if (kDebugMode)
+  //           print(
+  //               '[AuthService] Falling back to Firebase id_token for exchange');
+  //         final firebaseToken = await _currentUser!.getIdToken(force);
+  //         gid = firebaseToken;
+  //         if (kDebugMode && gid != null)
+  //           _logJwtDebug('Firebase fallback id_token', gid);
+  //       } catch (_) {
+  //         gid = null;
+  //       }
+  //     }
+
+  //     if (gid == null) return null;
+
+  //     try {
+  //       final dio = Dio(BaseOptions(baseUrl: AppConfig.apiBaseUrl));
+  //       if (kDebugMode) _logJwtDebug('Exchanging id_token', gid);
+  //       final resp =
+  //           await dio.post('/api/auth/google', data: {'id_token': gid});
+  //       String? jwt;
+  //       if (resp.data is String) {
+  //         jwt = resp.data as String;
+  //       } else if (resp.data is Map) {
+  //         final map = resp.data as Map;
+  //         jwt = map['token'] ??
+  //             map['access_token'] ??
+  //             map['jwt'] ??
+  //             map['token']?.toString();
+  //       }
+  //       if (jwt == null) {
+  //         throw Exception('Invalid auth response: ${resp.data}');
+  //       }
+  //       _token = jwt;
+  //       await _saveToken(jwt);
+  //       return jwt;
+  //     } on DioException catch (e) {
+  //       if (kDebugMode)
+  //         print(
+  //             'Error exchanging Google id_token: ${e.response?.statusCode} ${e.response?.data}');
+  //       return null;
+  //     } catch (e) {
+  //       if (kDebugMode) print('Error exchanging Google id_token: $e');
+  //       return null;
+  //     }
+  //   } finally {
+  //     // _isLoading = false;
+  //     notifyListeners();
+  //   }
+  // }
+
+  Future<void> saveSession(Map<String, dynamic> session) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('auth-session', jsonEncode(session));
+  }
+
+  // Future<AuthSession?> _loadSession() async {
+  //   final prefs = await SharedPreferences.getInstance();
+  //   final raw = prefs.getString('auth-session');
+  //   if (raw == null) return null;
+  //   return AuthSession.fromJson(jsonDecode(raw));
+  // }
 
   Future<String?> _fetchFreshGoogleIdToken() async {
     try {
@@ -190,8 +303,9 @@ class AuthService extends ChangeNotifier {
           }
         } catch (_) {}
       } else {
-        if (kDebugMode)
+        if (kDebugMode) {
           print('[AuthService] No Firebase user when fetching fresh id_token');
+        }
       }
 
       return null;
@@ -206,19 +320,82 @@ class AuthService extends ChangeNotifier {
     String password,
   ) async {
     try {
+      // 1️⃣ Firebase auth
       final credential = await _auth.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
-      _currentUser = credential.user;
-      await getIdToken(force: true);
 
-      notifyListeners();
+      _currentUser = credential.user;
+
+      // 2️⃣ Pega idToken do Firebase
+      final firebaseIdToken = await _currentUser!.getIdToken(true);
+
+      // 3️⃣ Exchange com backend
+      final dio = Dio(BaseOptions(baseUrl: AppConfig.apiBaseUrl));
+      final resp = await dio.post(
+        '/api/auth/login',
+        data: {'id_token': firebaseIdToken},
+      );
+
+      // 4️⃣ Extrai JWT + session
+      final data = resp.data as Map<String, dynamic>;
+      final jwt = data['token'];
+
+      if (jwt == null) {
+        throw Exception('Token not returned by backend');
+      }
+
+      // 5️⃣ Salva tudo
+      _token = jwt;
+      _session = AuthSession.fromJson(data);
+
+      apiService.setAuthToken(jwt);
+
+      await _saveToken(jwt);
+      await saveSession(data);
+
       return credential;
     } on FirebaseAuthException catch (e) {
       throw _handleAuthException(e);
+    } on DioException catch (e) {
+      if (kDebugMode) {
+        print('Backend auth failed: ${e.response?.data}');
+      }
+      rethrow;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
     }
   }
+
+  void restoreSession(AuthSession session) {
+    _session = session;
+
+    // 🔥 ISSO É O PONTO CRÍTICO
+    apiService.setAuthToken(_token!);
+
+    notifyListeners();
+  }
+
+  // Future<UserCredential?> signInWithEmailAndPassword(
+  //   String email,
+  //   String password,
+  // ) async {
+  //   try {
+  //     final credential = await _auth.signInWithEmailAndPassword(
+  //       email: email,
+  //       password: password,
+  //     );
+  //     _currentUser = credential.user;
+  //     await getIdToken(force: true);
+
+  //     notifyListeners();
+  //     return credential;
+  //   } on FirebaseAuthException catch (e) {
+  //     throw _handleAuthException(e);
+  //   }
+  // }
 
   // Future<UserCredential?> signUpWithEmailAndPassword(
   //   String email,
@@ -274,8 +451,9 @@ class AuthService extends ChangeNotifier {
       // Exchange using the freshest id_token we can obtain
       final freshId = await _fetchFreshGoogleIdToken() ?? _googleIdToken;
       if (freshId == null) {
-        if (kDebugMode)
+        if (kDebugMode) {
           print('No Google id_token available for backend exchange');
+        }
         _currentUser = userCredential.user;
         notifyListeners();
         return userCredential;
@@ -283,31 +461,37 @@ class AuthService extends ChangeNotifier {
 
       try {
         final dio = Dio(BaseOptions(baseUrl: AppConfig.apiBaseUrl));
-        if (kDebugMode)
+        if (kDebugMode) {
           _logJwtDebug(
               'Exchanging Google id_token with backend (prefix)', freshId);
+        }
         final resp =
             await dio.post('/api/auth/google', data: {'id_token': freshId});
-        if (kDebugMode)
+        if (kDebugMode) {
           print('Auth exchange response: ${resp.statusCode} ${resp.data}');
-        String? jwt;
-        if (resp.data is String) {
-          jwt = resp.data as String;
-        } else if (resp.data is Map) {
-          final map = resp.data as Map;
-          jwt = map['token'] ??
-              map['access_token'] ??
-              map['jwt'] ??
-              map['token']?.toString();
         }
+        String? jwt;
+        final data = resp.data as Map<String, dynamic>;
+        jwt = data['token'];
+        // if (jwt == null) throw Exception('Token missing');
+        // if (resp.data is String) {
+        //   jwt = resp.data as String;
+        // } else if (resp.data is Map) {
+        //   final data = resp.data as Map;
+        //   jwt = data['token'] ??
+        //       data['access_token'] ??
+        //       data['jwt'] ??
+        //       data['token']?.toString();
+        // }
         if (jwt != null) {
           _token = jwt;
+          _session = AuthSession.fromJson(data);
+          apiService.setAuthToken(jwt);
           _pendingRegistration = false;
           _googleIdToken = null;
           await _saveToken(jwt);
+          await saveSession(data);
           _currentUser = userCredential.user;
-          notifyListeners();
-          _isLoading = false;
           return userCredential;
         } else {
           if (kDebugMode) print('No JWT found in auth exchange response');
@@ -342,9 +526,10 @@ class AuthService extends ChangeNotifier {
       notifyListeners();
       return userCredential;
     } on FirebaseAuthException catch (e) {
-      if (kDebugMode)
+      if (kDebugMode) {
         print(
             '[AuthService] FirebaseAuthException during Google sign-in: ${e.code} ${e.message}');
+      }
       throw _handleAuthException(e);
     } catch (e, s) {
       if (kDebugMode) {
@@ -352,6 +537,9 @@ class AuthService extends ChangeNotifier {
         print(s);
       }
       rethrow;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
     }
   }
 
@@ -360,7 +548,11 @@ class AuthService extends ChangeNotifier {
     await _auth.signOut();
     _currentUser = null;
     _token = null;
+    _session = null;
     await _clearToken();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('auth-session');
+    _isLoading = false;
     notifyListeners();
   }
 
@@ -386,16 +578,18 @@ class AuthService extends ChangeNotifier {
     if (_googleIdToken == null) return false;
     try {
       final dio = Dio(BaseOptions(baseUrl: AppConfig.apiBaseUrl));
-      if (kDebugMode)
+      if (kDebugMode) {
         _logJwtDebug('Completing registration with id_token', _googleIdToken!);
+      }
       final resp = await dio.post('/api/auth/google', data: {
         'id_token': _googleIdToken,
         'school_id': schoolId,
         'tax_number': taxNumber,
       });
-      if (kDebugMode)
+      if (kDebugMode) {
         print(
             'Complete registration response: ${resp.statusCode} ${resp.data}');
+      }
       String? jwt;
       if (resp.data is String) {
         jwt = resp.data as String;

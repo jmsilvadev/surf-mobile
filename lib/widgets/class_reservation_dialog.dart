@@ -1,22 +1,31 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+//import 'package:surf_mobile/models/auth_session_model.dart';
 import 'package:surf_mobile/models/class_model.dart';
 import 'package:surf_mobile/providers/navigation_provider.dart';
 import 'package:surf_mobile/utils/enrollment_receipt_pdf.dart';
 import '../models/class_rule_model.dart';
 import '../models/class_pack_purchase_model.dart';
 import '../services/api_service.dart';
-import '../services/user_provider.dart';
+//import '../services/user_provider.dart';
 
 class ClassReservationDialog extends StatefulWidget {
   final int classId;
   final int studentId;
+
+  final String schoolName;
+  final String studentName;
+  final String studentLevel;
+
   final VoidCallback onSuccess;
 
   const ClassReservationDialog({
     super.key,
     required this.classId,
     required this.studentId,
+    required this.schoolName,
+    required this.studentName,
+    required this.studentLevel,
     required this.onSuccess,
   });
 
@@ -49,7 +58,7 @@ class _ClassReservationDialogState extends State<ClassReservationDialog> {
     setState(() {
       rules = results[0] as List<ClassRule>;
       packs = (results[1] as List<ClassPackPurchase>)
-          .where((p) => p.status == 'pending')
+          .where((p) => p.status == 'active')
           .toList();
       _class = results[2] as ClassModel;
       loading = false;
@@ -64,7 +73,7 @@ class _ClassReservationDialogState extends State<ClassReservationDialog> {
   Future<void> _reserve() async {
     if (!accepted || totalBalance <= 0) return;
 
-    final userProvider = context.read<UserProvider>();
+    //  final authSession = context.read<AuthSession>();
     final api = context.read<ApiService>();
     setState(() => loading = true);
 
@@ -74,14 +83,11 @@ class _ClassReservationDialogState extends State<ClassReservationDialog> {
         studentId: widget.studentId,
       );
 
-      final profile = userProvider.profile;
-      final student = profile?.student;
-
       // 🧾 GERA PDF (igual ao frontend)
       await EnrollmentReceiptPdf.generate(
-        schoolName: student?.school.name ?? 'Ocean Dojo School',
-        studentName: student?.name ?? '',
-        studentLevel: student?.skillLevel?.name ?? '',
+        schoolName: widget.schoolName,
+        studentName: widget.studentName,
+        studentLevel: widget.studentLevel,
         classId: _class!.id,
         teacherName: _class!.teacher.name,
         startDateTime: _class!.startDatetime,

@@ -1,4 +1,6 @@
 class School {
+  final int id;
+
   final String name;
   final String taxNumber;
 
@@ -9,6 +11,7 @@ class School {
   final String? logoUrl;
 
   School({
+    required this.id,
     required this.name,
     required this.taxNumber,
     required this.address,
@@ -20,6 +23,7 @@ class School {
 
   factory School.fromJson(Map<String, dynamic> json) {
     return School(
+      id: (json['id'] as num?)?.toInt() ?? 0,
       name: json['name'] as String,
       taxNumber: json['tax_number'] as String,
       address: json['address'] as String,
@@ -32,6 +36,7 @@ class School {
 
   Map<String, dynamic> toJson() {
     return {
+      'id': id,
       'name': name,
       'tax_number': taxNumber,
       'address': address,

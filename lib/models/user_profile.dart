@@ -1,17 +1,17 @@
 import 'package:flutter/foundation.dart';
-import 'package:surf_mobile/models/school_model.dart';
+//import 'package:surf_mobile/models/school_model.dart';
 import 'package:surf_mobile/models/skill_level_model.dart';
 
 class UserAccount {
   final String id;
   final String email;
-  final String userType;
+  final String role;
   final bool active;
 
   const UserAccount({
     required this.id,
     required this.email,
-    required this.userType,
+    required this.role,
     required this.active,
   });
 
@@ -19,36 +19,45 @@ class UserAccount {
     return UserAccount(
       id: json['id']?.toString() ?? '',
       email: json['email']?.toString() ?? '',
-      userType: json['user_type']?.toString() ?? '',
+      role: json['role']?.toString() ?? '',
       active: json['active'] is bool
           ? json['active'] as bool
           : json['active'].toString().toLowerCase() == 'true',
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'email': email,
+      'role': role,
+      'active': active,
+    };
   }
 }
 
 class StudentProfile {
   final int id;
   final int schoolId;
-  final School school;
+//  final School? school;
   final String name;
-  final String taxNumber;
-  final String? phone;
+  //final String taxNumber;
+  // final String? phone;
   final DateTime? birthDate;
   final String? photoUrl;
-  final String userId;
-  final bool active;
+  // final String userId;
+  // final bool active;
   final SkillLevel? skillLevel;
 
   const StudentProfile({
     required this.id,
     required this.schoolId,
-    required this.school,
+    // required this.school,
     required this.name,
-    required this.taxNumber,
-    required this.userId,
-    required this.active,
-    this.phone,
+    // required this.taxNumber,
+    // required this.userId,
+    // required this.active,
+    // this.phone,
     this.birthDate,
     this.photoUrl,
     this.skillLevel,
@@ -74,24 +83,25 @@ class StudentProfile {
       schoolId: json['school_id'] is int
           ? json['school_id'] as int
           : int.tryParse(json['school_id']?.toString() ?? '0') ?? 0,
-      school: json['school'] is Map<String, dynamic>
-          ? School.fromJson(json['school'] as Map<String, dynamic>)
-          : School(
-              name: '',
-              taxNumber: '',
-              address: '',
-              phone: '',
-              email: '',
-              nis: ''),
+      // school: json['school'] is Map<String, dynamic>
+      //     ? School.fromJson(json['school'] as Map<String, dynamic>)
+      //     : School(
+      //         id: 0,
+      //         name: '',
+      //         taxNumber: '',
+      //         address: '',
+      //         phone: '',
+      //         email: '',
+      //         nis: ''),
       name: json['name']?.toString() ?? '',
-      taxNumber: json['tax_number']?.toString() ?? '',
-      phone: json['phone']?.toString(),
+      //   taxNumber: json['tax_number']?.toString() ?? '',
+      //   phone: json['phone']?.toString(),
       birthDate: parsedDate,
       photoUrl: json['photo_url']?.toString(),
-      userId: json['user_id']?.toString() ?? '',
-      active: json['active'] is bool
-          ? json['active'] as bool
-          : json['active'].toString().toLowerCase() == 'true',
+      //    userId: json['user_id']?.toString() ?? '',
+      // active: json['active'] is bool
+      //     ? json['active'] as bool
+      //     : json['active'].toString().toLowerCase() == 'true',
       skillLevel: json['skill_level'] != null
           ? SkillLevel.fromJson(json['skill_level'])
           : null,
@@ -100,26 +110,26 @@ class StudentProfile {
 
   StudentProfile copyWith({
     int? schoolId,
-    School? school,
+    //School? school,
     String? name,
-    String? taxNumber,
-    String? phone,
+    //String? taxNumber,
+    // String? phone,
     DateTime? birthDate,
     String? photoUrl,
-    bool? active,
+    // bool? active,
     SkillLevel? skillLevel,
   }) {
     return StudentProfile(
       id: id,
       schoolId: schoolId ?? this.schoolId,
-      school: school ?? this.school,
+      //school: school ?? this.school,
       name: name ?? this.name,
-      taxNumber: taxNumber ?? this.taxNumber,
-      phone: phone ?? this.phone,
+      //  taxNumber: taxNumber ?? this.taxNumber,
+      //   phone: phone ?? this.phone,
       birthDate: birthDate ?? this.birthDate,
       photoUrl: photoUrl ?? this.photoUrl,
-      userId: userId,
-      active: active ?? this.active,
+      //   userId: userId,
+      // active: active ?? this.active,
       skillLevel: skillLevel ?? this.skillLevel,
     );
   }
@@ -128,11 +138,22 @@ class StudentProfile {
     return {
       'school_id': overrideSchoolId ?? schoolId,
       'name': name,
-      'tax_number': taxNumber,
-      'phone': phone,
+      //  'tax_number': taxNumber,
+      //   'phone': phone,
       'birth_date': birthDate?.toIso8601String(),
       'photo_url': photoUrl,
-      'active': active,
+      //  'active': active,
+    };
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'school_id': schoolId,
+      'name': name,
+      'birth_date': birthDate?.toIso8601String(),
+      'photo_url': photoUrl,
+      'skill_level': skillLevel?.toJson(),
     };
   }
 }
@@ -196,8 +217,17 @@ class UserProfile {
   });
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
+    final userJson = json['user'];
+
     return UserProfile(
-      user: UserAccount.fromJson(json['user'] as Map<String, dynamic>),
+      user: userJson is Map<String, dynamic>
+          ? UserAccount.fromJson(userJson)
+          : const UserAccount(
+              id: '',
+              email: '',
+              role: '',
+              active: true,
+            ), // fallback seguro
       student: json['student'] is Map<String, dynamic>
           ? StudentProfile.fromJson(json['student'] as Map<String, dynamic>)
           : null,
@@ -216,5 +246,38 @@ class UserProfile {
       student: student ?? this.student,
       teacher: teacher ?? this.teacher,
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'user': user.toJson(),
+      'student': student != null
+          ? {
+              'id': student!.id,
+              'school_id': student!.schoolId,
+              'name': student!.name,
+              //  'tax_number': student!.taxNumber,
+              //'phone': student!.phone,
+              'birth_date': student!.birthDate?.toIso8601String(),
+              'photo_url': student!.photoUrl,
+              //   'user_id': student!.userId,
+              // 'active': student!.active,
+            }
+          : null,
+      'teacher': teacher != null
+          ? {
+              'id': teacher!.id,
+              'school_id': teacher!.schoolId,
+              'name': teacher!.name,
+              'tax_number': teacher!.taxNumber,
+              'nif': teacher!.nif,
+              'nis': teacher!.nis,
+              'phone': teacher!.phone,
+              'specialty': teacher!.specialty,
+              'user_id': teacher!.userId,
+              'active': teacher!.active,
+            }
+          : null,
+    };
   }
 }

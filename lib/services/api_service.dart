@@ -5,6 +5,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:surf_mobile/config/app_config.dart';
 import 'package:surf_mobile/models/EquipmentWithPrice.dart';
+//import 'package:surf_mobile/models/auth_session_model.dart';
 import 'package:surf_mobile/models/class_model.dart';
 import 'package:surf_mobile/models/class_pack_model.dart';
 import 'package:surf_mobile/models/class_pack_purchase_model.dart';
@@ -22,7 +23,7 @@ import 'package:surf_mobile/models/user_profile.dart';
 class ApiService extends ChangeNotifier {
   late Dio _dio;
   String? _authToken;
-  Future<String?> Function()? _tokenRefreshCallback;
+  // Future<String?> Function()? _tokenRefreshCallback;
 
   ApiService() {
     _dio = Dio(BaseOptions(
@@ -37,69 +38,88 @@ class ApiService extends ChangeNotifier {
     // Interceptor: attach token; if missing, try to refresh via callback before request.
     print('🌐 BASE URL = ${_dio.options.baseUrl}');
     _dio.interceptors.add(InterceptorsWrapper(
+      // onRequest: (options, handler) async {
+      //   // allow unauthenticated access to auth endpoints
+      //   final path = options.path;
+      //   if (path == '/api/auth/google') {
+      //     handler.next(options);
+      //     return;
+      //   }
+
+      //   // If we have token attach it
+      //   if (_authToken != null &&
+      //       !options.headers.containsKey('Authorization')) {
+      //     options.headers['Authorization'] = 'Bearer $_authToken';
+      //     handler.next(options);
+      //     return;
+      //   }
+
+      //   print('➡️ REQUEST ${options.path}');
+      //   print('➡️ AUTH HEADER ${options.headers['Authorization']}');
+      //   // No token: try to refresh via callback if provided
+      //   if (_tokenRefreshCallback != null) {
+      //     try {
+      //       final newToken = await _tokenRefreshCallback!.call();
+      //       if (newToken != null) {
+      //         setAuthToken(newToken);
+      //         options.headers['Authorization'] = 'Bearer $newToken';
+      //         handler.next(options);
+      //         return;
+      //       }
+      //     } catch (e) {
+      //       if (kDebugMode) print('Token refresh failed before request: $e');
+      //     }
+      //   }
+
+      //   // If still no token, reject request with clear error
+      //   handler.reject(DioException(
+      //     requestOptions: options,
+      //     error: 'No authentication token available',
+      //     response: Response(
+      //         requestOptions: options,
+      //         statusCode: 401,
+      //         data: {'error': 'missing_token'}),
+      //   ));
+      // },
       onRequest: (options, handler) async {
-        // allow unauthenticated access to auth endpoints
         final path = options.path;
-        if (path == '/api/auth/google') {
+
+        // endpoints públicos
+        if (path.startsWith('/api/auth/google')) {
           handler.next(options);
           return;
         }
 
-        // If we have token attach it
-        if (_authToken != null &&
-            !options.headers.containsKey('Authorization')) {
+        if (_authToken != null) {
           options.headers['Authorization'] = 'Bearer $_authToken';
-          handler.next(options);
-          return;
         }
-
         print('➡️ REQUEST ${options.path}');
-        print('➡️ AUTH HEADER ${options.headers['Authorization']}');
-        // No token: try to refresh via callback if provided
-        if (_tokenRefreshCallback != null) {
-          try {
-            final newToken = await _tokenRefreshCallback!.call();
-            if (newToken != null) {
-              setAuthToken(newToken);
-              options.headers['Authorization'] = 'Bearer $newToken';
-              handler.next(options);
-              return;
-            }
-          } catch (e) {
-            if (kDebugMode) print('Token refresh failed before request: $e');
-          }
-        }
 
-        // If still no token, reject request with clear error
-        handler.reject(DioException(
-          requestOptions: options,
-          error: 'No authentication token available',
-          response: Response(
-              requestOptions: options,
-              statusCode: 401,
-              data: {'error': 'missing_token'}),
-        ));
+        print('➡️ AUTH HEADER ${options.headers['Authorization']}');
+
+        handler.next(options);
       },
+
       onError: (err, handler) async {
-        final statusCode = err.response?.statusCode;
-        if (statusCode == 401 && _tokenRefreshCallback != null) {
-          try {
-            final newToken = await _tokenRefreshCallback!.call();
-            if (newToken != null) {
-              setAuthToken(newToken);
-              final opts = err.requestOptions;
-              opts.headers['Authorization'] = 'Bearer $newToken';
-              try {
-                final response = await _dio.fetch(opts);
-                return handler.resolve(response);
-              } catch (e) {
-                return handler.next(err);
-              }
-            }
-          } catch (_) {
-            // ignore and forward original error
-          }
-        }
+        // final statusCode = err.response?.statusCode;
+        // if (statusCode == 401 && _tokenRefreshCallback != null) {
+        //   try {
+        //     final newToken = await _tokenRefreshCallback!.call();
+        //     if (newToken != null) {
+        //       setAuthToken(newToken);
+        //       final opts = err.requestOptions;
+        //       opts.headers['Authorization'] = 'Bearer $newToken';
+        //       try {
+        //         final response = await _dio.fetch(opts);
+        //         return handler.resolve(response);
+        //       } catch (e) {
+        //         return handler.next(err);
+        //       }
+        //     }
+        //   } catch (_) {
+        //     // ignore and forward original error
+        //   }
+        // }
         handler.next(err);
       },
     ));
@@ -114,9 +134,9 @@ class ApiService extends ChangeNotifier {
     }
   }
 
-  void setTokenRefreshCallback(Future<String?> Function()? cb) {
-    _tokenRefreshCallback = cb;
-  }
+  // void setTokenRefreshCallback(Future<String?> Function()? cb) {
+  //   _tokenRefreshCallback = cb;
+  // }
 
   Future<List<ClassModel>> getClasses() async {
     try {
@@ -178,7 +198,7 @@ class ApiService extends ChangeNotifier {
         if (featured != null) 'featured': featured,
       },
     );
-
+    debugPrint('RAW /api/class-packs RESPONSE: ${response.data}');
     final data = response.data;
     if (data is List) {
       return data.map((e) => ClassPack.fromJson(e)).toList();
@@ -200,6 +220,7 @@ class ApiService extends ChangeNotifier {
           'student_id': studentId,
         },
       );
+      debugPrint('✅ RAW can-enroll RESPONSE: ${response.data}');
 
       if (response.data is Map<String, dynamic>) {
         return EnrollmentValidation.fromJson(
@@ -496,16 +517,28 @@ class ApiService extends ChangeNotifier {
     }
   }
 
-  Future<UserProfile> getCurrentUserProfile() async {
+  Future<StudentProfile> getCurrentUserProfile() async {
     try {
-      final response = await _dio.get('/auth/me');
-      if (response.data is Map<String, dynamic>) {
-        return UserProfile.fromJson(response.data as Map<String, dynamic>);
+      final response = await _dio.get('/api/auth/me');
+
+      // debugPrint('🧪 RAW /api/auth/me RESPONSE: ${response.data}');
+
+      if (response.data is Map &&
+          response.data['profile'] is Map<String, dynamic>) {
+        final profileJson = Map<String, dynamic>.from(response.data['profile']);
+
+        final student = StudentProfile.fromJson(profileJson);
+
+        // debugPrint('✅ Parsed StudentProfile: ${student.toJson()}');
+
+        return student;
       }
-      if (response.data is Map) {
-        final map = Map<String, dynamic>.from(response.data as Map);
-        return UserProfile.fromJson(map);
-      }
+
+      // if (response.data is Map && response.data.containsKey('profile')) {
+      //   final map = Map<String, dynamic>.from(response.data as Map);
+      //   debugPrint('✅ Parsed Map for StudentProfile: $map');
+      //   return StudentProfile.fromJson(map);
+      // }
       throw Exception('Unexpected profile response format');
     } catch (e) {
       if (kDebugMode) {
