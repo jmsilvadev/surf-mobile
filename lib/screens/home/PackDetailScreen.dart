@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_stripe/flutter_stripe.dart' hide Card;
 import 'package:provider/provider.dart';
 import 'package:surf_mobile/helpers/currency_formatter.dart';
 import 'package:surf_mobile/models/class_pack_model.dart';
 import 'package:surf_mobile/providers/class_pack_provider.dart';
+import 'package:surf_mobile/services/stripe_service.dart';
+import 'package:surf_mobile/services/api_service.dart';
+import 'package:surf_mobile/services/user_provider.dart';
 // Importe onde sua ClassCalendar está localizada:
-import 'package:surf_mobile/screens/calendar_screen.dart';
 
 class PackDetailScreen extends StatefulWidget {
   // Mudamos para StatefulWidget para gerenciar o estado do botão
@@ -18,12 +21,11 @@ class PackDetailScreen extends StatefulWidget {
 
 class _PackDetailScreenState extends State<PackDetailScreen> {
   bool _isPurchasing = false;
-
   @override
   Widget build(BuildContext context) {
-    // Usamos context.read pois chamaremos uma função, não precisamos "escutar" mudanças de estado aqui
-    final provider = context.read<ClassPackProvider>();
-
+    final stripe = context.read<StripeService>();
+    final api = context.read<ApiService>();
+    final user = context.read<UserProvider>();
     return Scaffold(
       appBar: AppBar(title: Text(widget.pack.name)),
       body: ListView(
@@ -86,24 +88,69 @@ class _PackDetailScreenState extends State<PackDetailScreen> {
                       setState(() => _isPurchasing = true);
 
                       try {
-                        await provider.buyPack(widget.pack);
+                        final studentId = user.studentId;
+                        if (studentId == null) {
+                          throw Exception('Usuário não identificado.');
+                        }
+
+                        final checkout = await api.createPackPaymentIntent(
+                          packId: widget.pack.id,
+                          studentId: studentId,
+                        );
+                        final clientSecret =
+                            stripe.parseClientSecret(checkout);
+                        final paymentIntentId =
+                            checkout['payment_intent_id'];
+                        if (paymentIntentId is! String ||
+                            paymentIntentId.isEmpty) {
+                          throw Exception(
+                            'Resposta inválida: payment_intent_id ausente.',
+                          );
+                        }
+                        await stripe.presentPaymentSheet(clientSecret);
+
+                        final status = await _waitForStripePaymentStatus(
+                          api,
+                          paymentIntentId,
+                        );
+                        if (status != 'succeeded') {
+                          throw Exception(
+                            'Pagamento não confirmado (status: $status).',
+                          );
+                        }
 
                         if (!mounted) return;
 
+                        final schoolId = user.schoolId;
+                        if (schoolId != null) {
+                          await context
+                              .read<ClassPackProvider>()
+                              .load(schoolId);
+                        }
+
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
-                            content: Text('Pack purchased successfully!'),
+                            content: Text('Pagamento concluído.'),
                             backgroundColor: Colors.green,
                           ),
                         );
 
-                        // NAVEGAÇÃO PARA O CALENDÁRIO
-                        // Usamos pushReplacement para que, se ele apertar "voltar", não volte para a tela de compra
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => CalendarScreen()),
-                        );
+                        setState(() => _isPurchasing = false);
+                      } on StripeException catch (e) {
+                        setState(() => _isPurchasing = false);
+                        if (e.error.code == FailureCode.Canceled) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Pagamento cancelado.')),
+                          );
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                'Erro no pagamento: ${e.error.message}',
+                              ),
+                            ),
+                          );
+                        }
                       } catch (e) {
                         setState(() => _isPurchasing = false);
                         ScaffoldMessenger.of(context).showSnackBar(
@@ -121,4 +168,24 @@ class _PackDetailScreenState extends State<PackDetailScreen> {
       ),
     );
   }
+}
+
+Future<String> _waitForStripePaymentStatus(
+  ApiService api,
+  String paymentIntentId,
+) async {
+  const attempts = 12;
+  const delay = Duration(seconds: 2);
+
+  for (var i = 0; i < attempts; i++) {
+    final payment = await api.getStripePayment(
+      paymentIntentId: paymentIntentId,
+    );
+    final status = payment['status'];
+    if (status is String && status.isNotEmpty && status != 'pending') {
+      return status;
+    }
+    await Future.delayed(delay);
+  }
+  return 'pending';
 }

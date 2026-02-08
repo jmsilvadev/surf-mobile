@@ -12,4 +12,10 @@ class AppConfig {
   // OAuth client id for server-side verification (web client id)
   static String get googleServerClientId =>
       dotenv.env['GOOGLE_SERVER_CLIENT_ID'] ?? '';
+
+  static String get stripePublishableKey =>
+      dotenv.env['STRIPE_PUBLISHABLE_KEY'] ?? '';
+
+  static String get stripeMerchantIdentifier =>
+      dotenv.env['STRIPE_MERCHANT_IDENTIFIER'] ?? '';
 }

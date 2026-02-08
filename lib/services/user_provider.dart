@@ -24,6 +24,7 @@ class UserProvider extends ChangeNotifier {
   int? get studentId => profile?.id;
   School? get school => _session?.school;
   int? get schoolId => _session?.school?.id;
+  String? get userEmail => _session?.user.email;
 
   String? get studentSkillSlug => _session?.profile?.skillLevel?.slug;
 

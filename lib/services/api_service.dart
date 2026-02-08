@@ -134,6 +134,8 @@ class ApiService extends ChangeNotifier {
     }
   }
 
+  Dio get dio => _dio;
+
   // void setTokenRefreshCallback(Future<String?> Function()? cb) {
   //   _tokenRefreshCallback = cb;
   // }
@@ -254,6 +256,19 @@ class ApiService extends ChangeNotifier {
         'quantity': quantity,
       },
     );
+  }
+
+  Future<Map<String, dynamic>> createPackPaymentIntent({
+    required int packId,
+    required int studentId,
+  }) async {
+    final response = await _dio.post(
+      '/api/class-packs/$packId/payment-intent',
+      data: {
+        'student_id': studentId,
+      },
+    );
+    return Map<String, dynamic>.from(response.data);
   }
 
   Future<ClassModel> getClassById(int classId) async {
@@ -437,6 +452,27 @@ class ApiService extends ChangeNotifier {
     }
   }
 
+  Future<Map<String, dynamic>> createRentalPaymentIntent({
+    required int studentId,
+    required List<Map<String, dynamic>> items,
+    required String startDate,
+    required String endDate,
+    String? customerEmail,
+  }) async {
+    final response = await _dio.post(
+      '/api/rentals/payment-intent',
+      data: {
+        'student_id': studentId,
+        'items': items,
+        'start_date': startDate,
+        'end_date': endDate,
+        if (customerEmail != null && customerEmail.isNotEmpty)
+          'customer_email': customerEmail,
+      },
+    );
+    return Map<String, dynamic>.from(response.data);
+  }
+
   Future<List<EquipmentModel>> getEquipment() async {
     try {
       final response = await _dio.get('/api/equipment');
@@ -472,6 +508,14 @@ class ApiService extends ChangeNotifier {
       }
       rethrow;
     }
+  }
+
+  Future<Map<String, dynamic>> getStripePayment(
+      {required String paymentIntentId}) async {
+    final response = await _dio.get(
+      '/api/stripe-payments/$paymentIntentId',
+    );
+    return Map<String, dynamic>.from(response.data);
   }
 
   Future<List<Map<String, dynamic>>> getSchools() async {

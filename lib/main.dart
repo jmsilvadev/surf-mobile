@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
+
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
@@ -7,6 +9,7 @@ import 'package:surf_mobile/providers/navigation_provider.dart';
 import 'package:surf_mobile/services/api_service.dart';
 import 'package:surf_mobile/services/auth_service.dart';
 import 'package:surf_mobile/services/navigation_service.dart';
+import 'package:surf_mobile/services/stripe_service.dart';
 import 'package:surf_mobile/screens/login_screen.dart';
 import 'package:surf_mobile/screens/main_screen.dart';
 import 'package:surf_mobile/screens/registration_screen.dart';
@@ -56,6 +59,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(
           create: (_) => AuthService(apiService),
         ),
+        Provider<StripeService>(create: (_) => StripeService()),
         ChangeNotifierProxyProvider<AuthService, UserProvider>(
           create: (_) => UserProvider(),
           update: (_, auth, user) {
