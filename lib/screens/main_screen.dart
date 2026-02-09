@@ -22,10 +22,10 @@ class _MainScreenState extends State<MainScreen> {
   // int _currentIndex = 0;
 
   final List<Widget> _screens = [
-    const HomeLightScreen(),
-    const CalendarScreen(),
-    // const RegistrationsScreen(),
     const StudentDashboardPage(),
+    const CalendarScreen(),
+    const HomeLightScreen(),
+    // const RegistrationsScreen(),
     const RentalsScreen(),
   ];
 
@@ -114,16 +114,16 @@ class _MainScreenState extends State<MainScreen> {
         },
         items: const [
           BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Home',
+            icon: Icon(Icons.dashboard),
+            label: 'My Dashboard',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.calendar_today),
             label: 'Calendar',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.dashboard),
-            label: 'My Dashboard',
+            icon: Icon(Icons.inventory),
+            label: 'Packs',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.shopping_bag),

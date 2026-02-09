@@ -3,6 +3,7 @@ import 'package:flutter_stripe/flutter_stripe.dart' hide Card;
 import 'package:provider/provider.dart';
 
 import 'package:surf_mobile/models/EquipmentWithPrice.dart';
+import 'package:surf_mobile/providers/navigation_provider.dart';
 import 'package:surf_mobile/services/api_service.dart';
 import 'package:surf_mobile/services/stripe_service.dart';
 import 'package:surf_mobile/services/user_provider.dart';
@@ -255,6 +256,8 @@ class _RentalsScreenState extends State<RentalsScreen> {
 
       selected.clear();
       loadEquipments();
+
+      context.read<NavigationProvider>().setIndex(0);
     } on StripeException catch (e) {
       if (e.error.code == FailureCode.Canceled) {
         ScaffoldMessenger.of(context).showSnackBar(

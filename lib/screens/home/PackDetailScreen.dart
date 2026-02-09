@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:surf_mobile/helpers/currency_formatter.dart';
 import 'package:surf_mobile/models/class_pack_model.dart';
 import 'package:surf_mobile/providers/class_pack_provider.dart';
+import 'package:surf_mobile/providers/navigation_provider.dart';
 import 'package:surf_mobile/services/stripe_service.dart';
 import 'package:surf_mobile/services/api_service.dart';
 import 'package:surf_mobile/services/user_provider.dart';
@@ -136,6 +137,9 @@ class _PackDetailScreenState extends State<PackDetailScreen> {
                         );
 
                         setState(() => _isPurchasing = false);
+
+                        context.read<NavigationProvider>().setIndex(0);
+                        Navigator.of(context).popUntil((route) => route.isFirst);
                       } on StripeException catch (e) {
                         setState(() => _isPurchasing = false);
                         if (e.error.code == FailureCode.Canceled) {
