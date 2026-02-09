@@ -12,6 +12,7 @@ class RentalModel {
   final String? notes;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final String? equipmentName;
 
   RentalModel({
     required this.id,
@@ -27,6 +28,7 @@ class RentalModel {
     this.notes,
     required this.createdAt,
     required this.updatedAt,
+    this.equipmentName,
   });
 
   factory RentalModel.fromJson(Map<String, dynamic> json) {
@@ -44,6 +46,27 @@ class RentalModel {
       notes: json['notes'] as String?,
       createdAt: DateTime.parse(json['created_at'] as String),
       updatedAt: DateTime.parse(json['updated_at'] as String),
+    );
+  }
+
+  RentalModel copyWith({
+    String? equipmentName,
+  }) {
+    return RentalModel(
+      id: id,
+      schoolId: schoolId,
+      studentId: studentId,
+      equipmentId: equipmentId,
+      equipmentPriceId: equipmentPriceId,
+      amountSnapshot: amountSnapshot,
+      startDate: startDate,
+      endDate: endDate,
+      quantity: quantity,
+      status: status,
+      notes: notes,
+      createdAt: createdAt,
+      updatedAt: updatedAt,
+      equipmentName: equipmentName ?? this.equipmentName,
     );
   }
 

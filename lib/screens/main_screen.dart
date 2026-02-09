@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:surf_mobile/features/student_dashboard_screen.dart';
 import 'package:surf_mobile/providers/class_pack_provider.dart';
 import 'package:surf_mobile/providers/navigation_provider.dart';
 import 'package:surf_mobile/screens/home/home_light_screen.dart';
 import 'package:surf_mobile/services/auth_service.dart';
 import 'package:surf_mobile/screens/calendar_screen.dart';
-import 'package:surf_mobile/screens/registrations_screen.dart';
+//import 'package:surf_mobile/screens/registrations_screen.dart';
 import 'package:surf_mobile/screens/rentals_screen.dart';
 import 'package:surf_mobile/services/user_provider.dart';
 import 'package:surf_mobile/widgets/user_avatar.dart';
@@ -23,7 +24,8 @@ class _MainScreenState extends State<MainScreen> {
   final List<Widget> _screens = [
     const HomeLightScreen(),
     const CalendarScreen(),
-    const RegistrationsScreen(),
+    // const RegistrationsScreen(),
+    const StudentDashboardPage(),
     const RentalsScreen(),
   ];
 
@@ -120,8 +122,8 @@ class _MainScreenState extends State<MainScreen> {
             label: 'Calendar',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.book),
-            label: 'My Registrations',
+            icon: Icon(Icons.dashboard),
+            label: 'My Dashboard',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.shopping_bag),
