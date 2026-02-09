@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:surf_mobile/features/models/student_pack_dashboard_item.dart';
 import 'package:surf_mobile/models/class_pack_model.dart';
 import 'package:surf_mobile/models/class_pack_purchase_model.dart';
 import 'package:surf_mobile/services/user_provider.dart';
@@ -14,6 +15,38 @@ class ClassPackProvider extends ChangeNotifier {
 
   List<ClassPack> packs = [];
   List<ClassPackPurchase> purchases = [];
+
+  List<StudentPackDashboardItem> get dashboardItems {
+    if (packs.isEmpty || purchases.isEmpty) return [];
+
+    return purchases.map((purchase) {
+      final pack = packs.firstWhere(
+        (p) => p.id == purchase.classPackId,
+        orElse: () => ClassPack(
+          id: purchase.classPackId,
+          schoolId: 0,
+          name: 'Pack',
+          lessonsQty: purchase.lessonsTotal,
+          price: null,
+          includesEquipment: false,
+          includesInsurance: false,
+          featured: false,
+          featuredOrder: 0,
+        ),
+      );
+
+      return StudentPackDashboardItem(
+        purchaseId: purchase.id,
+        packId: pack.id,
+        packName: pack.name,
+        lessonsBalance: purchase.availableLessons,
+        status: purchase.status,
+        paymentStatus: purchase.paymentStatus,
+        pricePaid: pack.price,
+        validityDays: pack.validityDays,
+      );
+    }).toList();
+  }
 
   String get headline {
     final skill = userProvider.studentSkillSlug;

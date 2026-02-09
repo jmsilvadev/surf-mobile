@@ -18,6 +18,7 @@ import 'package:surf_mobile/models/equipment_model.dart';
 import 'package:surf_mobile/models/price_model.dart';
 import 'package:surf_mobile/models/rental_receipt_model.dart';
 import 'package:surf_mobile/models/school_model.dart';
+import 'package:surf_mobile/models/student_deposit_model.dart';
 import 'package:surf_mobile/models/user_profile.dart';
 
 class ApiService extends ChangeNotifier {
@@ -209,6 +210,25 @@ class ApiService extends ChangeNotifier {
     return [];
   }
 
+  Future<List<StudentDeposit>> getStudentDeposits(int studentId) async {
+    try {
+      final response = await _dio.get('/api/students/$studentId/deposits');
+
+      if (response.data is List) {
+        return (response.data as List)
+            .map((e) => StudentDeposit.fromJson(e))
+            .toList();
+      }
+
+      return [];
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error fetching student deposits: $e');
+      }
+      rethrow;
+    }
+  }
+
   Future<EnrollmentValidation> getEnrollmentValidation({
     required int classId,
     required int studentId,
@@ -353,6 +373,21 @@ class ApiService extends ChangeNotifier {
     } catch (e) {
       if (kDebugMode) {
         print('Error fetching rentals: $e');
+      }
+      rethrow;
+    }
+  }
+
+  Future<EquipmentModel> getEquipmentById(int equipmentId) async {
+    try {
+      final response = await _dio.get('/api/equipment/$equipmentId');
+      if (response.data is Map<String, dynamic>) {
+        return EquipmentModel.fromJson(response.data);
+      }
+      return throw Exception('Unexpected equipment response format');
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error fetching equipment: $e');
       }
       rethrow;
     }

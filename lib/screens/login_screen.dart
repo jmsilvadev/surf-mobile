@@ -43,9 +43,17 @@ class _LoginScreenState extends State<LoginScreen> {
         _passwordController.text,
       );
     } catch (e) {
+      final message = e.toString();
+
+      // 🔥 ignora erro interno do plugin
+      if (message.contains('PigeonUserDetails') ||
+          message.contains('List<Object?>')) {
+        return;
+      }
+
       if (mounted) {
         setState(() {
-          _errorMessage = e.toString();
+          _errorMessage = message;
           _isLoading = false;
         });
       }

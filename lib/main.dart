@@ -4,6 +4,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
 import 'package:surf_mobile/providers/class_pack_provider.dart';
 import 'package:surf_mobile/providers/navigation_provider.dart';
+import 'package:surf_mobile/providers/rentals_provider.dart';
 import 'package:surf_mobile/services/api_service.dart';
 import 'package:surf_mobile/services/auth_service.dart';
 import 'package:surf_mobile/services/navigation_service.dart';
@@ -55,6 +56,11 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => apiService),
         ChangeNotifierProvider(
           create: (_) => AuthService(apiService),
+        ),
+        ChangeNotifierProvider(
+          create: (context) => RentalsProvider(
+            context.read<ApiService>(),
+          ),
         ),
         ChangeNotifierProxyProvider<AuthService, UserProvider>(
           create: (_) => UserProvider(),
@@ -134,14 +140,14 @@ class HomeRouter extends StatefulWidget {
 }
 
 class _HomeRouterState extends State<HomeRouter> {
-  // @override
-  // void initState() {
-  //   print('🏠 HomeRouter initState');
-  //   super.initState();
-  //   WidgetsBinding.instance.addPostFrameCallback((_) {
-  //     context.read<UserProvider>().ensureProfileLoaded();
-  //   });
-  // }
+  @override
+  void initState() {
+    print('🏠 HomeRouter initState');
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<UserProvider>().ensureProfileLoaded();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
