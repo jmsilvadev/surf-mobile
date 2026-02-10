@@ -61,11 +61,14 @@ class ClassModel {
           ? SkillLevel.fromJson(json['skill_level'])
           : null,
       // ✅ AQUI ESTAVA O BUG
-      studentIds: (json['student_ids'] as List<dynamic>?)
-              ?.whereType<num>()
-              .map((e) => e.toInt())
-              .toList() ??
-          [],
+      // studentIds: (json['student_ids'] as List<dynamic>?)
+      //         ?.whereType<num>()
+      //         .map((e) => e.toInt())
+      //         .toList() ??
+      //     [],
+      studentIds: (json['student_ids'] as List<dynamic>?) != null
+    ? List<int>.from(json['student_ids'])
+    : [],
       students: (json['students'] as List<dynamic>?)
               ?.map((e) => StudentClassItem.fromJson(e))
               .toList() ??

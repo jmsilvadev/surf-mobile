@@ -68,6 +68,14 @@ class _StudentDashboardPageState extends State<StudentDashboardPage> {
       });
     } catch (e) {
       debugPrint('Dashboard error: $e');
+      classes = [];
+      deposits = [];
+    } finally {
+      if (mounted) {
+        setState(() {
+          loading = false;
+        });
+      }
     }
   }
 

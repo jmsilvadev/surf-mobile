@@ -34,19 +34,19 @@ class StudentDeposit {
   factory StudentDeposit.fromJson(Map<String, dynamic> json) {
     return StudentDeposit(
       id: json['id'],
-      paymentIntentId: json['payment_intent_id'],
-      sourceType: json['source_type'],
-      sourceId: json['source_id'],
-      schoolId: json['school_id'],
-      studentId: json['student_id'],
-      stripeCustomerId: json['stripe_customer_id'],
+      paymentIntentId: json['payment_intent_id'] ?? '',
+      sourceType: json['source_type'] ?? 'other',
+      sourceId: json['source_id'] ?? 0,
+      schoolId: json['school_id'] ?? 0,
+      studentId: json['student_id'] ?? 0,
+      stripeCustomerId: json['stripe_customer_id'] ?? '',
       amount: (json['amount'] as num).toDouble(),
       currency: json['currency'],
-      status: json['status'],
+      status: json['status'] ?? 'unknown',
       createdAt: DateTime.parse(json['created_at']),
       updatedAt: DateTime.parse(json['updated_at']),
-      invoiceUrl: json['invoice_url'],
-      invoiceCode: json['invoice_code'],
+      invoiceUrl: json['invoice_url'] ?? null,
+      invoiceCode: json['invoice_code'] ?? null,
     );
   }
 }
