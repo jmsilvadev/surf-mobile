@@ -16,14 +16,26 @@ class UserProvider extends ChangeNotifier {
   String? _loadError;
   String? _updateError;
 
-  StudentProfile? get profile => _session?.profile;
+  dynamic get profile => _session?.profile;
   bool get isLoading => _isLoading;
   String? get loadError => _loadError;
   String? get updateError => _updateError;
-  bool get isStudent => _session?.user.role == 'student' && profile?.id != null;
-  int? get studentId => profile?.id;
+  bool get isStudent =>
+      _session?.user.role == 'student' && profile?.id != null;
+  bool get isTeacher => _session?.user.role == 'teacher';
+  int? get studentId =>
+      _session?.user.role == 'student' ? profile?.id : null;
+  StudentProfile? get studentProfile => isStudent ? _session?.profile : null;
+  TeacherProfile? get teacherProfile =>
+      isTeacher ? _session?.profile as TeacherProfile? : null;
+
   School? get school => _session?.school;
-  int? get schoolId => _session?.school?.id;
+  int? get schoolId {
+    if (studentProfile != null) return studentProfile!.schoolId;
+    if (teacherProfile != null) return teacherProfile!.schoolId;
+    return null;
+  }
+
   String? get userEmail => _session?.user.email;
 
   String? get studentSkillSlug => _session?.profile?.skillLevel?.slug;
@@ -109,28 +121,32 @@ class UserProvider extends ChangeNotifier {
       _isLoading = true;
       _loadError = null;
       notifyListeners();
-      final student = await _apiService?.getCurrentUserProfile();
-      debugPrint('✅ Profile Student carregado: ${student?.toJson()}');
+      final profile =
+          await _apiService?.getCurrentUserProfile(session.user.role);
+      debugPrint('✅ Profile carregado: ${profile?.toJson()}');
 
       // 🚨 REGRA: mobile só aceita STUDENT
-      final isStudent = session.user.role == 'student' && student != null;
+      // final isStudent = session.user.role == 'student' && student != null;
 
-      if (!isStudent) {
-        debugPrint('🚫 Usuário não é student → forçando logout');
+      // if (!isStudent) {
+      //   debugPrint('🚫 Usuário não é student → forçando logout');
 
-        await _authService?.forceLogout();
+      //   await _authService?.forceLogout();
 
-        _session = null;
-        _hasAttemptedLoad = false;
-        _isLoading = false;
+      //   _session = null;
+      //   _hasAttemptedLoad = false;
+      //   _isLoading = false;
 
-        notifyListeners();
-        return;
-      }
+      //   notifyListeners();
+      //   return;
+      // }
 
-      debugPrint('🚀 profile via API:  ${student.toJson()}');
+      // debugPrint('🚀 profile via API:  ${student.toJson()}');
+      // _session = session.copyWith(
+      //   profile: student,
+      // );
       _session = session.copyWith(
-        profile: student,
+        profile: profile,
       );
     } catch (e) {
       _loadError = 'Não foi possível carregar seu perfil. $e';

@@ -81,7 +81,7 @@ class _MainScreenState extends State<MainScreen> {
         actions: [
           Consumer<UserProvider>(
             builder: (context, userProvider, _) {
-              final student = userProvider.profile;
+              final student = userProvider.studentProfile;
 
               return Padding(
                 padding: const EdgeInsets.only(right: 8),

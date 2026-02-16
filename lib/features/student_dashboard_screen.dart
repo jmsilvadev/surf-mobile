@@ -13,7 +13,7 @@ import 'package:surf_mobile/models/student_deposit_model.dart';
 import 'package:surf_mobile/providers/class_pack_provider.dart';
 import 'package:surf_mobile/providers/rentals_provider.dart';
 import 'package:surf_mobile/services/api_service.dart';
-import 'package:surf_mobile/services/auth_service.dart';
+import 'package:surf_mobile/services/user_provider.dart';
 
 class StudentDashboardPage extends StatefulWidget {
   const StudentDashboardPage({super.key});
@@ -34,9 +34,13 @@ class _StudentDashboardPageState extends State<StudentDashboardPage> {
   void initState() {
     super.initState();
 
-    final session = context.read<AuthService>().session!;
-    final schoolId = session.profile!.schoolId;
-    final studentId = session.profile!.id;
+    final userProvider = context.read<UserProvider>();
+    final student = userProvider.studentProfile;
+
+    if (student == null) return;
+
+    final schoolId = student.schoolId;
+    final studentId = student.id;
 
     context.read<ClassPackProvider>().load(schoolId);
 
@@ -47,14 +51,15 @@ class _StudentDashboardPageState extends State<StudentDashboardPage> {
   }
 
   Future<void> _loadDashboard() async {
-    final session = context.read<AuthService>().session!;
-    final studentId = session.profile!.id;
     final api = context.read<ApiService>();
+    final userProvider = context.read<UserProvider>();
+    final student = userProvider.studentProfile;
+    final studentId = student?.id;
 
     try {
       final results = await Future.wait([
         //  api.getStudentPacks(studentId),
-        api.getStudentDeposits(studentId),
+        api.getStudentDeposits(studentId!),
         api.getClasses(),
       ]);
 

@@ -287,7 +287,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
   Future<void> _joinClass(int classId) async {
     final userProvider = context.read<UserProvider>();
-    final student = userProvider.profile!;
+    final student = userProvider.studentProfile;
     final school = userProvider.school;
 
     if (_studentId == null) {
@@ -324,8 +324,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
           classId: classId,
           studentId: _studentId!,
           schoolName: school?.name ?? 'Ocean Dojo School',
-          studentName: student.name,
-          studentLevel: student.skillLevel?.name ?? '',
+          studentName: student?.name ?? 'Student',
+          studentLevel: student?.skillLevel?.name ?? '',
           onSuccess: () {
             _loadClasses();
           },

@@ -203,6 +203,21 @@ class TeacherProfile {
           : json['active'].toString().toLowerCase() == 'true',
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'school_id': schoolId,
+      'name': name,
+      'tax_number': taxNumber,
+      'nif': nif,
+      'nis': nis,
+      'phone': phone,
+      'specialty': specialty,
+      'user_id': userId,
+      'active': active,
+    };
+  }
 }
 
 class UserProfile {

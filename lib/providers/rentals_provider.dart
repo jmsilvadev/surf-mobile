@@ -40,24 +40,24 @@ class RentalsProvider extends ChangeNotifier {
     }
 
     // 1️⃣ Buscar rentals
-    final rawRentals = await api.getStudentRentals(studentId);
+    // final rawRentals = await api.getStudentRentals(studentId);
 
-    // 2️⃣ Buscar equipamentos (1 chamada só)
-    final equipments = await api.getEquipment();
+    // // 2️⃣ Buscar equipamentos (1 chamada só)
+    // final equipments = await api.getEquipment();
 
-    // 3️⃣ Criar mapa equipmentId -> name
-    final equipmentMap = {
-      for (final e in equipments) e.id: e.name,
-    };
+    // // 3️⃣ Criar mapa equipmentId -> name
+    // final equipmentMap = {
+    //   for (final e in equipments) e.id: e.name,
+    // };
 
-    // 4️⃣ Enriquecer rentals
-    rentals = rawRentals.map((rental) {
-      return rental.copyWith(
-        equipmentName: equipmentMap[rental.equipmentId],
-      );
-    }).toList();
+    // // 4️⃣ Enriquecer rentals
+    // rentals = rawRentals.map((rental) {
+    //   return rental.copyWith(
+    //     equipmentName: equipmentMap[rental.equipmentId],
+    //   );
+    // }).toList();
 
-    isLoading = false;
-    notifyListeners();
+    // isLoading = false;
+    // notifyListeners();
   }
 }

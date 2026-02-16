@@ -6,7 +6,7 @@ import 'skill_level_model.dart';
 class AuthSession {
   final UserAccount user;
   final School? school;
-  final StudentProfile? profile;
+  final dynamic profile;
 
   AuthSession({
     required this.user,
@@ -17,7 +17,7 @@ class AuthSession {
   AuthSession copyWith({
     UserAccount? user,
     School? school,
-    StudentProfile? profile,
+    dynamic profile,
   }) {
     return AuthSession(
       user: user ?? this.user,
@@ -31,7 +31,7 @@ class AuthSession {
       user: UserAccount.fromJson(json['user']),
       school: json['school'] != null ? School.fromJson(json['school']) : null,
       profile: json['profile'] != null
-          ? StudentProfile.fromJson(json['profile'])
+          ? UserProfile.fromJson(json['profile'])
           : null,
     );
   }

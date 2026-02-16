@@ -596,7 +596,7 @@ class ApiService extends ChangeNotifier {
     }
   }
 
-  Future<StudentProfile> getCurrentUserProfile() async {
+  Future<dynamic> getCurrentUserProfile(String? role) async {
     try {
       final response = await _dio.get('/api/auth/me');
 
@@ -606,11 +606,35 @@ class ApiService extends ChangeNotifier {
           response.data['profile'] is Map<String, dynamic>) {
         final profileJson = Map<String, dynamic>.from(response.data['profile']);
 
-        final student = StudentProfile.fromJson(profileJson);
+        switch (role) {
+          case 'student':
+            final student = StudentProfile.fromJson(profileJson);
+            debugPrint('✅ Parsed StudentProfile: ${student.toJson()}');
+            return student;
+          case 'teacher':
+            final teacher = TeacherProfile.fromJson(profileJson);
+            debugPrint('✅ Parsed TeacherProfile: ${teacher.toJson()}');
+            return teacher;
+          default:
+            final profile = UserProfile.fromJson(profileJson);
+            debugPrint('✅ Parsed UserProfile: ${profile.toJson()}');
+            return profile;
+        }
 
-        // debugPrint('✅ Parsed StudentProfile: ${student.toJson()}');
+        // if (role == 'student') {
+        //   final student = StudentProfile.fromJson(profileJson);
+        //   debugPrint('✅ Parsed StudentProfile: ${student.toJson()}');
+        //   return student;
+        // } else if (role == 'teacher') {
+        //   final teacher = TeacherProfile.fromJson(profileJson);
+        //   debugPrint('✅ Parsed TeacherProfile: ${teacher.toJson()}');
+        //   return teacher;
+        // }
+        // final profile = UserProfile.fromJson(profileJson);
 
-        return student;
+        // // debugPrint('✅ Parsed StudentProfile: ${student.toJson()}');
+
+        // return profile;
       }
 
       // if (response.data is Map && response.data.containsKey('profile')) {

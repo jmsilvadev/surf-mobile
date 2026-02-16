@@ -6,12 +6,13 @@ import 'package:provider/provider.dart';
 import 'package:surf_mobile/providers/class_pack_provider.dart';
 import 'package:surf_mobile/providers/navigation_provider.dart';
 import 'package:surf_mobile/providers/rentals_provider.dart';
+import 'package:surf_mobile/providers/teacher_dashboard_provider.dart';
+import 'package:surf_mobile/screens/role_based_main_screen.dart';
 import 'package:surf_mobile/services/api_service.dart';
 import 'package:surf_mobile/services/auth_service.dart';
 import 'package:surf_mobile/services/navigation_service.dart';
 import 'package:surf_mobile/services/stripe_service.dart';
 import 'package:surf_mobile/screens/login_screen.dart';
-import 'package:surf_mobile/screens/main_screen.dart';
 import 'package:surf_mobile/screens/registration_screen.dart';
 import 'package:surf_mobile/screens/school_selection_screen.dart';
 import 'package:surf_mobile/theme/app_theme.dart';
@@ -85,6 +86,15 @@ class MyApp extends StatelessWidget {
             // Se já existe, as instâncias de api e user já são atualizadas pelo proxy
             return packProvider ?? ClassPackProvider(api, user);
           },
+        ),
+        ChangeNotifierProxyProvider2<ApiService, UserProvider,
+            TeacherDashboardProvider>(
+          create: (_) => TeacherDashboardProvider(
+            apiService,
+            Provider.of<UserProvider>(_, listen: false),
+          ),
+          update: (_, api, user, provider) =>
+              provider ?? TeacherDashboardProvider(api, user),
         ),
       ],
       child: MaterialApp(
@@ -193,7 +203,7 @@ class _HomeRouterState extends State<HomeRouter> {
           return const SchoolSelectionScreen();
         }
 
-        return const MainScreen();
+        return const RoleBasedMainScreen();
       },
     );
   }
