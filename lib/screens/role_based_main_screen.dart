@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:surf_mobile/screens/admin/admin_main_screen.dart';
 import 'package:surf_mobile/screens/main_screen.dart';
 import 'package:surf_mobile/screens/teacher_main_screen.dart';
 import 'package:surf_mobile/services/auth_service.dart';
@@ -16,6 +17,10 @@ class RoleBasedMainScreen extends StatelessWidget {
       return const Scaffold(
         body: Center(child: CircularProgressIndicator()),
       );
+    }
+
+    if (role == 'admin') {
+      return const AdminMainScreen();
     }
 
     if (role == 'teacher') {

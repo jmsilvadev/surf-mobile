@@ -30,9 +30,13 @@ class AuthSession {
     return AuthSession(
       user: UserAccount.fromJson(json['user']),
       school: json['school'] != null ? School.fromJson(json['school']) : null,
-      profile: json['profile'] != null
-          ? UserProfile.fromJson(json['profile'])
-          : null,
+      // profile: json['profile'] != null
+      //     ? UserProfile.fromJson(json['profile'])
+      //     : null,
+      profile: _parseProfile(
+        json['profile'],
+        json['user']['role'],
+      ),
     );
   }
 
@@ -90,5 +94,27 @@ class Profile {
       'photo_url': photoUrl,
       'skill_level': skillLevel?.toJson(),
     };
+  }
+}
+
+dynamic _parseProfile(
+  Map<String, dynamic>? json,
+  String role,
+) {
+  if (json == null) return null;
+
+  switch (role) {
+    case 'student':
+      return StudentProfile.fromJson(json);
+
+    case 'teacher':
+      return TeacherProfile.fromJson(json);
+
+    case 'admin':
+    case 'super_admin':
+      return null;
+
+    default:
+      return null;
   }
 }

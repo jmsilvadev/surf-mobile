@@ -55,7 +55,6 @@ class KpiCards extends StatelessWidget {
     );
     return '€${total.toStringAsFixed(2)}';
   }
-  
 }
 
 class _KpiCard extends StatelessWidget {
@@ -102,4 +101,3 @@ class _KpiCard extends StatelessWidget {
     );
   }
 }
-

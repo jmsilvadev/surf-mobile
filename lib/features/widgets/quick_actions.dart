@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:surf_mobile/providers/navigation_provider.dart';
 
 class QuickActions extends StatelessWidget {
   const QuickActions({super.key});
@@ -11,17 +13,23 @@ class QuickActions extends StatelessWidget {
         _Action(
           icon: Icons.shopping_cart,
           label: 'Buy Pack',
-          onTap: () => Navigator.pushNamed(context, '/packs'),
+          onTap: () => context
+              .read<NavigationProvider>()
+              .setIndex(2), // Navigate to HomeLightScreen
         ),
         _Action(
           icon: Icons.surfing,
           label: 'Classes',
-          onTap: () => Navigator.pushNamed(context, '/classes'),
+          onTap: () => context
+              .read<NavigationProvider>()
+              .setIndex(1), // Navigate to CalendarScreen
         ),
         _Action(
           icon: Icons.inventory,
           label: 'Rent',
-          onTap: () => Navigator.pushNamed(context, '/rentals'),
+          onTap: () => context
+              .read<NavigationProvider>()
+              .setIndex(3), // Navigate to RentalsScreen
         ),
       ],
     );

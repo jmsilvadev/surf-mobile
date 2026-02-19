@@ -5,6 +5,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:surf_mobile/config/app_config.dart';
 import 'package:surf_mobile/models/EquipmentWithPrice.dart';
+import 'package:surf_mobile/models/admin_dashboard_model.dart';
 //import 'package:surf_mobile/models/auth_session_model.dart';
 import 'package:surf_mobile/models/class_model.dart';
 import 'package:surf_mobile/models/class_pack_model.dart';
@@ -140,6 +141,30 @@ class ApiService extends ChangeNotifier {
   // void setTokenRefreshCallback(Future<String?> Function()? cb) {
   //   _tokenRefreshCallback = cb;
   // }
+
+  Future<AdminDashboardResponse> getDashboard() async {
+    final response = await _dio.get('/api/admin/dashboard');
+
+    final data = response.data;
+
+    print('📊 DASHBOARD RAW TYPE: ${data.runtimeType}');
+    print('📊 DASHBOARD RAW DATA: $data');
+
+    // 🔥 Caso backend mande JSON como String
+    if (data is String) {
+      final decoded = jsonDecode(data);
+      return AdminDashboardResponse.fromJson(
+        Map<String, dynamic>.from(decoded),
+      );
+    }
+
+    // ✅ Caso ideal: já é um Map
+    if (data is Map<String, dynamic>) {
+      return AdminDashboardResponse.fromJson(data);
+    }
+
+    throw Exception('Unexpected dashboard response format');
+  }
 
   Future<List<ClassModel>> getClasses() async {
     try {

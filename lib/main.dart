@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
+import 'package:surf_mobile/providers/admin_dashboard_provider.dart';
 import 'package:surf_mobile/providers/class_pack_provider.dart';
 import 'package:surf_mobile/providers/navigation_provider.dart';
 import 'package:surf_mobile/providers/rentals_provider.dart';
@@ -61,6 +62,11 @@ class MyApp extends StatelessWidget {
           create: (_) => AuthService(apiService),
         ),
         Provider<StripeService>(create: (_) => StripeService()),
+        ChangeNotifierProvider(
+          create: (context) => AdminDashboardProvider(
+            context.read<ApiService>(),
+          ),
+        ),
         ChangeNotifierProvider(
           create: (context) => RentalsProvider(
             context.read<ApiService>(),
@@ -180,7 +186,7 @@ class _HomeRouterState extends State<HomeRouter> {
           );
         }
 
-        if (user.profile == null) {
+        if (!user.isAdmin && user.profile == null) {
           return const Scaffold(
             body: Center(child: CircularProgressIndicator()),
           );

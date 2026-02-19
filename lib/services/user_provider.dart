@@ -12,7 +12,7 @@ class UserProvider extends ChangeNotifier {
 
   AuthSession? _session;
   bool _isLoading = false;
-  bool _hasAttemptedLoad = false;
+  // bool _hasAttemptedLoad = false;
   String? _loadError;
   String? _updateError;
 
@@ -20,11 +20,12 @@ class UserProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get loadError => _loadError;
   String? get updateError => _updateError;
+  bool get isAdmin => _session?.user.role == 'admin';
   bool get isStudent =>
-      _session?.user.role == 'student' && profile?.id != null;
-  bool get isTeacher => _session?.user.role == 'teacher';
-  int? get studentId =>
-      _session?.user.role == 'student' ? profile?.id : null;
+      _session?.user.role == 'student' && _session?.profile is StudentProfile;
+  bool get isTeacher =>
+      _session?.user.role == 'teacher' && _session?.profile is TeacherProfile;
+  int? get studentId => _session?.user.role == 'student' ? profile?.id : null;
   StudentProfile? get studentProfile => isStudent ? _session?.profile : null;
   TeacherProfile? get teacherProfile =>
       isTeacher ? _session?.profile as TeacherProfile? : null;
@@ -33,6 +34,7 @@ class UserProvider extends ChangeNotifier {
   int? get schoolId {
     if (studentProfile != null) return studentProfile!.schoolId;
     if (teacherProfile != null) return teacherProfile!.schoolId;
+    if (isAdmin) return _session?.school?.id;
     return null;
   }
 
@@ -65,7 +67,7 @@ class UserProvider extends ChangeNotifier {
       _loadError = null;
       _updateError = null;
       _isLoading = false;
-      _hasAttemptedLoad = false;
+      //  _hasAttemptedLoad = false;
       notifyListeners();
       return;
     }
@@ -81,80 +83,87 @@ class UserProvider extends ChangeNotifier {
   }
 
   Future<void> ensureProfileLoaded() async {
-    if (_apiService == null || _isLoading) return;
+    // if (_apiService == null || _isLoading) return;
 
-    // if (_isLoading) {
-    //   debugPrint('⏭️ ensureProfileLoaded ignorado (já carregando)');
+    // // if (_isLoading) {
+    // //   debugPrint('⏭️ ensureProfileLoaded ignorado (já carregando)');
+    // //   return;
+    // // }
+
+    // if (_isLoading || _hasAttemptedLoad) {
+    //   debugPrint('⏭️ profile já tentado, ignorando');
     //   return;
     // }
 
-    if (_isLoading || _hasAttemptedLoad) {
-      debugPrint('⏭️ profile já tentado, ignorando');
-      return;
-    }
+    // if (_authService?.cachedToken == null) {
+    //   _loadError = 'Sessão inválida. Faça login novamente.';
+    //   notifyListeners();
+    //   return;
+    // }
 
-    if (_authService?.cachedToken == null) {
-      _loadError = 'Sessão inválida. Faça login novamente.';
-      notifyListeners();
-      return;
-    }
+    // if (_session != null) {
+    //   debugPrint('⏭️ session já carregado');
+    //   return;
+    // }
 
-    if (_session != null) {
-      debugPrint('⏭️ session já carregado');
-      return;
-    }
+    // final session = _authService?.session;
+    // if (session == null) {
+    //   //debugPrint('❌ session é null em ensureProfileLoaded');
+    //   debugPrint('⏳ aguardando sessão...');
+    //   return;
+    // }
+
+    // debugPrint('🚀 Buscando profile via API...');
+
+    // print('👤 ensureProfileLoaded called | '
+    //     'token=${_authService?.cachedToken != null} | '
+    //     'session=${_authService?.session != null}');
+
+    // try {
+    //   _isLoading = true;
+    //   _loadError = null;
+    //   notifyListeners();
+    //   final profile =
+    //       await _apiService?.getCurrentUserProfile(session.user.role);
+    //   debugPrint('✅ Profile carregado: ${profile?.toJson()}');
+
+    //   // 🚨 REGRA: mobile só aceita STUDENT
+    //   // final isStudent = session.user.role == 'student' && student != null;
+
+    //   // if (!isStudent) {
+    //   //   debugPrint('🚫 Usuário não é student → forçando logout');
+
+    //   //   await _authService?.forceLogout();
+
+    //   //   _session = null;
+    //   //   _hasAttemptedLoad = false;
+    //   //   _isLoading = false;
+
+    //   //   notifyListeners();
+    //   //   return;
+    //   // }
+
+    //   // debugPrint('🚀 profile via API:  ${student.toJson()}');
+    //   // _session = session.copyWith(
+    //   //   profile: student,
+    //   // );
+    //   _session = session.copyWith(
+    //     profile: profile,
+    //   );
+    // } catch (e) {
+    //   _loadError = 'Não foi possível carregar seu perfil. $e';
+    // } finally {
+    //   _isLoading = false;
+    //   _hasAttemptedLoad = true;
+    //   notifyListeners();
+    // }
+    if (_session != null) return;
 
     final session = _authService?.session;
-    if (session == null) {
-      //debugPrint('❌ session é null em ensureProfileLoaded');
-      debugPrint('⏳ aguardando sessão...');
-      return;
-    }
+    if (session == null) return;
 
-    debugPrint('🚀 Buscando profile via API...');
-
-    print('👤 ensureProfileLoaded called | '
-        'token=${_authService?.cachedToken != null} | '
-        'session=${_authService?.session != null}');
-
-    try {
-      _isLoading = true;
-      _loadError = null;
-      notifyListeners();
-      final profile =
-          await _apiService?.getCurrentUserProfile(session.user.role);
-      debugPrint('✅ Profile carregado: ${profile?.toJson()}');
-
-      // 🚨 REGRA: mobile só aceita STUDENT
-      // final isStudent = session.user.role == 'student' && student != null;
-
-      // if (!isStudent) {
-      //   debugPrint('🚫 Usuário não é student → forçando logout');
-
-      //   await _authService?.forceLogout();
-
-      //   _session = null;
-      //   _hasAttemptedLoad = false;
-      //   _isLoading = false;
-
-      //   notifyListeners();
-      //   return;
-      // }
-
-      // debugPrint('🚀 profile via API:  ${student.toJson()}');
-      // _session = session.copyWith(
-      //   profile: student,
-      // );
-      _session = session.copyWith(
-        profile: profile,
-      );
-    } catch (e) {
-      _loadError = 'Não foi possível carregar seu perfil. $e';
-    } finally {
-      _isLoading = false;
-      _hasAttemptedLoad = true;
-      notifyListeners();
-    }
+    _session = session;
+    notifyListeners();
   }
 
   bool get requiresSchoolSelection {
@@ -270,6 +279,6 @@ class UserProvider extends ChangeNotifier {
   // }
 
   void markNeedsReload() {
-    _hasAttemptedLoad = false;
+    // _hasAttemptedLoad = false;
   }
 }
