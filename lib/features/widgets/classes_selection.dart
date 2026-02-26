@@ -17,7 +17,7 @@ class ClassesSection extends StatelessWidget {
         ...classes.map(
           (c) => ListTile(
             title: Text(c.price.type),
-            subtitle: Text(c.teacher.name),
+            subtitle: Text(c.teachers.map((t) => t.name).join(', ')),
           ),
         ),
       ],

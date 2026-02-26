@@ -16,6 +16,7 @@ class UserProvider extends ChangeNotifier {
   String? _loadError;
   String? _updateError;
 
+  dynamic get user => _session?.user;
   dynamic get profile => _session?.profile;
   bool get isLoading => _isLoading;
   String? get loadError => _loadError;

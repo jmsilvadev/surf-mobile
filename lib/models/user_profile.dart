@@ -7,12 +7,14 @@ class UserAccount {
   final String email;
   final String role;
   final bool active;
+  final String? photoUrl;
 
   const UserAccount({
     required this.id,
     required this.email,
     required this.role,
     required this.active,
+    this.photoUrl,
   });
 
   factory UserAccount.fromJson(Map<String, dynamic> json) {
@@ -23,6 +25,7 @@ class UserAccount {
       active: json['active'] is bool
           ? json['active'] as bool
           : json['active'].toString().toLowerCase() == 'true',
+      photoUrl: json['photo_url']?.toString(),
     );
   }
 
@@ -32,6 +35,7 @@ class UserAccount {
       'email': email,
       'role': role,
       'active': active,
+      'photo_url': photoUrl,
     };
   }
 }

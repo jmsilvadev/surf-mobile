@@ -9,7 +9,7 @@ class EnrollmentReceiptPdf {
     required String studentName,
     required String studentLevel,
     required int classId,
-    required String teacherName,
+    required List<String> teacherNames,
     required DateTime startDateTime,
   }) async {
     final pdf = pw.Document();
@@ -50,7 +50,7 @@ class EnrollmentReceiptPdf {
               pw.Text('Class Information',
                   style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
               pw.Text('Class ID: #$classId'),
-              pw.Text('Teacher: $teacherName'),
+              pw.Text('Teachers: ${teacherNames.join(', ')}'),
               pw.Text(
                 'Date/Time: ${dateFormat.format(startDateTime)}',
               ),

@@ -82,12 +82,13 @@ class _MainScreenState extends State<MainScreen> {
           Consumer<UserProvider>(
             builder: (context, userProvider, _) {
               final student = userProvider.studentProfile;
+              final user = userProvider.user;
 
               return Padding(
                 padding: const EdgeInsets.only(right: 8),
                 child: UserAvatar(
-                  photoUrl: student?.photoUrl,
-                  name: student?.name,
+                  photoUrl: student?.photoUrl ?? user?.photoUrl,
+                  name: student?.name ?? user?.displayName,
                   radius: 18,
                 ),
               );

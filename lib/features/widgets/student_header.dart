@@ -15,8 +15,11 @@ class StudentHeader extends StatelessWidget {
           radius: 28,
           backgroundImage: provider.profile?.photoUrl != null
               ? NetworkImage(provider.profile!.photoUrl!)
-              : null,
-          child: provider.profile?.photoUrl == null
+              : provider.user?.photoUrl != null
+                  ? NetworkImage(provider.user!.photoUrl!)
+                  : null,
+          child: provider.profile?.photoUrl == null ||
+                  provider.user?.photoUrl == null
               ? const Icon(Icons.person, size: 32)
               : null,
         ),

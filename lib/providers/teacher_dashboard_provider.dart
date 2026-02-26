@@ -46,7 +46,7 @@ class TeacherDashboardProvider extends ChangeNotifier {
       notifyListeners();
 
       final all = await _api.getClasses();
-      _classes = all.where((c) => c.teacherId == teacher.id).toList();
+      _classes = all.where((c) => c.teacherIds.contains(teacher.id)).toList();
     } catch (e) {
       error = e.toString();
     } finally {

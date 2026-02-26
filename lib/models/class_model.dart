@@ -11,8 +11,8 @@ class ClassModel {
   final String status;
   final int maxStudents;
 
-  final int teacherId;
-  final TeacherModel teacher;
+  final List<int> teacherIds;
+  final List<TeacherModel> teachers;
 
   final int priceId;
   final PriceClassModel price;
@@ -30,8 +30,8 @@ class ClassModel {
     required this.endDatetime,
     required this.status,
     required this.maxStudents,
-    required this.teacherId,
-    required this.teacher,
+    required this.teacherIds,
+    required this.teachers,
     required this.priceId,
     required this.price,
     this.skillLevelId,
@@ -48,10 +48,13 @@ class ClassModel {
       endDatetime: DateTime.parse(json['end_datetime']),
       status: json['status'] ?? 'unknown',
       maxStudents: (json['max_students'] as num?)?.toInt() ?? 0,
-      teacherId: (json['teacher_id'] as num?)?.toInt() ?? 0,
-      teacher: json['teacher'] != null
-          ? TeacherModel.fromJson(json['teacher'])
-          : TeacherModel(name: 'Unknown'),
+      teacherIds: (json['teacher_ids'] as List<dynamic>?) != null
+          ? List<int>.from(json['teacher_ids'])
+          : [],
+      teachers: (json['teachers'] as List<dynamic>?)
+              ?.map((e) => TeacherModel.fromJson(e))
+              .toList() ??
+          [],
       priceId: (json['price_id'] as num?)?.toInt() ?? 0,
       price: json['price'] != null
           ? PriceClassModel.fromJson(json['price'])
@@ -67,8 +70,8 @@ class ClassModel {
       //         .toList() ??
       //     [],
       studentIds: (json['student_ids'] as List<dynamic>?) != null
-    ? List<int>.from(json['student_ids'])
-    : [],
+          ? List<int>.from(json['student_ids'])
+          : [],
       students: (json['students'] as List<dynamic>?)
               ?.map((e) => StudentClassItem.fromJson(e))
               .toList() ??

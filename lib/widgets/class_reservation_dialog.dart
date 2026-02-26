@@ -89,7 +89,7 @@ class _ClassReservationDialogState extends State<ClassReservationDialog> {
         studentName: widget.studentName,
         studentLevel: widget.studentLevel,
         classId: _class!.id,
-        teacherName: _class!.teacher.name,
+        teacherNames: _class!.teachers.map((t) => t.name).toList(),
         startDateTime: _class!.startDatetime,
       );
 
