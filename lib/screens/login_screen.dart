@@ -99,19 +99,6 @@ class _LoginScreenState extends State<LoginScreen> {
                     height: 160,
                     fit: BoxFit.contain,
                   ),
-                  const SizedBox(height: 24),
-                  Text(
-                    'OceanDojo',
-                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: Theme.of(context).colorScheme.primary,
-                            ) ??
-                        const TextStyle(
-                            fontSize: 32,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF005B82)),
-                    textAlign: TextAlign.center,
-                  ),
                   const SizedBox(height: 48),
                   if (_errorMessage != null)
                     Container(
