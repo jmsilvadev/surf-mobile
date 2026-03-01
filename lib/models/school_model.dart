@@ -22,14 +22,21 @@ class School {
   });
 
   factory School.fromJson(Map<String, dynamic> json) {
+    String _readString(String key, {String defaultValue = ''}) {
+      final value = json[key];
+      if (value == null) return defaultValue;
+      if (value is String) return value;
+      return value.toString();
+    }
+
     return School(
       id: (json['id'] as num?)?.toInt() ?? 0,
-      name: json['name'] as String,
-      taxNumber: json['tax_number'] as String,
-      address: json['address'] as String,
-      phone: json['phone'] as String,
-      email: json['email'] as String,
-      nis: json['nis'] as String,
+      name: _readString('name'),
+      taxNumber: _readString('tax_number'),
+      address: _readString('address'),
+      phone: _readString('phone'),
+      email: _readString('email'),
+      nis: _readString('nis'),
       logoUrl: json['logo_url'] as String?,
     );
   }

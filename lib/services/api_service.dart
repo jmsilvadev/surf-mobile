@@ -335,6 +335,25 @@ class ApiService extends ChangeNotifier {
     return [];
   }
 
+  Future<void> registerPushToken({
+    required String token,
+    required String platform,
+  }) async {
+    try {
+      await _dio.post(
+        '/api/push-tokens',
+        data: {
+          'token': token,
+          'platform': platform,
+        },
+      );
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error registering push token: $e');
+      }
+    }
+  }
+
   Future<List<ClassPackPurchase>> getStudentPacks(int studentId) async {
     final response = await _dio.get('/api/students/$studentId/packs');
 

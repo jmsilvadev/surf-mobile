@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
 import 'package:surf_mobile/providers/admin_dashboard_provider.dart';
@@ -12,12 +13,18 @@ import 'package:surf_mobile/screens/role_based_main_screen.dart';
 import 'package:surf_mobile/services/api_service.dart';
 import 'package:surf_mobile/services/auth_service.dart';
 import 'package:surf_mobile/services/navigation_service.dart';
+import 'package:surf_mobile/services/notification_service.dart';
 import 'package:surf_mobile/services/stripe_service.dart';
 import 'package:surf_mobile/screens/login_screen.dart';
 import 'package:surf_mobile/screens/registration_screen.dart';
 import 'package:surf_mobile/screens/school_selection_screen.dart';
 import 'package:surf_mobile/theme/app_theme.dart';
 import 'package:surf_mobile/services/user_provider.dart';
+
+@pragma('vm:entry-point')
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp();
+}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -27,6 +34,7 @@ void main() async {
 
   // Initialize Firebase.
   await Firebase.initializeApp();
+  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
   runApp(const MyApp());
   // runApp(
@@ -101,6 +109,15 @@ class MyApp extends StatelessWidget {
           ),
           update: (_, api, user, provider) =>
               provider ?? TeacherDashboardProvider(api, user),
+        ),
+        ChangeNotifierProxyProvider2<ApiService, UserProvider,
+            NotificationService>(
+          create: (_) => NotificationService(),
+          update: (_, api, user, service) {
+            service ??= NotificationService();
+            service.updateDependencies(api, user);
+            return service;
+          },
         ),
       ],
       child: MaterialApp(

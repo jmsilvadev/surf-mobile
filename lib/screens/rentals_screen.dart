@@ -63,7 +63,6 @@ class _RentalsScreenState extends State<RentalsScreen> {
     }
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Rent Equipment')),
       body: ListView.builder(
         padding: const EdgeInsets.all(16),
         itemCount: equipments.length,

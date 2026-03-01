@@ -7,7 +7,9 @@ import 'package:table_calendar/table_calendar.dart';
 import 'package:intl/intl.dart';
 import 'package:surf_mobile/services/api_service.dart';
 import 'package:surf_mobile/models/class_model.dart';
+import 'package:surf_mobile/services/notification_service.dart';
 import 'package:surf_mobile/services/user_provider.dart';
+import 'package:surf_mobile/helpers/currency_formatter.dart';
 
 class CalendarScreen extends StatefulWidget {
   const CalendarScreen({super.key});
@@ -51,6 +53,11 @@ class _CalendarScreenState extends State<CalendarScreen> {
         _classes = filteredClasses;
         _isLoading = false;
       });
+      if (mounted) {
+        context
+            .read<NotificationService>()
+            .syncStudentClassNotifications(filteredClasses);
+      }
     } catch (e) {
       setState(() {
         _errorMessage = 'Error loading classes: $e';
@@ -74,16 +81,6 @@ class _CalendarScreenState extends State<CalendarScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Class Calendar'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _loadClasses,
-            tooltip: 'Refresh',
-          ),
-        ],
-      ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _errorMessage != null
@@ -230,6 +227,11 @@ class _CalendarScreenState extends State<CalendarScreen> {
         return Card(
           margin: const EdgeInsets.only(bottom: 12),
           child: ListTile(
+            onTap: () => _showClassDetails(
+              classItem,
+              isEnrolled: isEnrolled,
+              canJoin: canJoin,
+            ),
             leading: CircleAvatar(
               backgroundColor: _getStatusColor(classItem.status),
               child: const Icon(Icons.surfing, color: Colors.white),
@@ -351,5 +353,134 @@ class _CalendarScreenState extends State<CalendarScreen> {
       default:
         return Colors.grey;
     }
+  }
+
+  void _showClassDetails(
+    ClassModel classItem, {
+    required bool isEnrolled,
+    required bool canJoin,
+  }) {
+    final teacherNames = classItem.teachers.isNotEmpty
+        ? classItem.teachers.map((t) => t.name).join(', ')
+        : 'TBD';
+    final studentsCount = classItem.studentIds?.length ?? 0;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    CircleAvatar(
+                      backgroundColor: _getStatusColor(classItem.status),
+                      child: const Icon(Icons.surfing, color: Colors.white),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Class #${classItem.id}',
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                _InfoRow(
+                  label: 'Time',
+                  value:
+                      '${DateFormat('HH:mm').format(classItem.startDatetime)} - ${DateFormat('HH:mm').format(classItem.endDatetime)}',
+                ),
+                _InfoRow(label: 'Status', value: classItem.status),
+                _InfoRow(label: 'Teachers', value: teacherNames),
+                _InfoRow(
+                  label: 'Level',
+                  value: classItem.skillLevel?.name ?? 'All levels',
+                ),
+                _InfoRow(
+                  label: 'Students',
+                  value: '$studentsCount / ${classItem.maxStudents}',
+                ),
+                if (classItem.price.amount > 0)
+                  _InfoRow(
+                    label: 'Price',
+                    value: CurrencyFormatter.euro(classItem.price.amount),
+                  ),
+                if (isEnrolled)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Chip(
+                      label: const Text('Enrolled'),
+                      backgroundColor: Colors.green.shade100,
+                      labelStyle: TextStyle(color: Colors.green.shade900),
+                    ),
+                  ),
+                const SizedBox(height: 16),
+                if (canJoin)
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        _joinClass(classItem.id);
+                      },
+                      icon: const Icon(Icons.person_add),
+                      label: const Text('Join class'),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _InfoRow extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const _InfoRow({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 80,
+            child: Text(
+              '$label:',
+              style: TextStyle(
+                color: Colors.grey.shade600,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(value),
+          ),
+        ],
+      ),
+    );
   }
 }

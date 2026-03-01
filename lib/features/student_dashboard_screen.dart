@@ -98,9 +98,6 @@ class _StudentDashboardPageState extends State<StudentDashboardPage> {
     final dashboardPacks = packProvider.dashboardItems;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('My Dashboard'),
-      ),
       body: RefreshIndicator(
         onRefresh: _loadDashboard,
         child: ListView(

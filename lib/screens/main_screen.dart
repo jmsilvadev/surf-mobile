@@ -77,27 +77,46 @@ class _MainScreenState extends State<MainScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('OceanDojo'),
+        title: Row(
+          children: [
+            Image.asset(
+              'assets/images/logo-oceandojo.png',
+              height: 24,
+            ),
+            const SizedBox(width: 8),
+            const Text('OceanDojo'),
+          ],
+        ),
         actions: [
           Consumer<UserProvider>(
             builder: (context, userProvider, _) {
               final student = userProvider.studentProfile;
               final user = userProvider.user;
 
-              return Padding(
-                padding: const EdgeInsets.only(right: 8),
-                child: UserAvatar(
-                  photoUrl: student?.photoUrl ?? user?.photoUrl,
-                  name: student?.name ?? user?.displayName,
-                  radius: 18,
+              return PopupMenuButton<String>(
+                tooltip: 'User menu',
+                offset: const Offset(0, 8),
+                onSelected: (value) {
+                  if (value == 'logout') {
+                    _handleLogout();
+                  }
+                },
+                itemBuilder: (context) => const [
+                  PopupMenuItem<String>(
+                    value: 'logout',
+                    child: Text('Logout'),
+                  ),
+                ],
+                child: Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: UserAvatar(
+                    photoUrl: student?.photoUrl ?? user?.photoUrl,
+                    name: student?.name ?? user?.displayName,
+                    radius: 18,
+                  ),
                 ),
               );
             },
-          ),
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: _handleLogout,
-            tooltip: 'Logout',
           ),
         ],
       ),
