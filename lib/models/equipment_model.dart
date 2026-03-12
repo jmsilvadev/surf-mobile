@@ -1,8 +1,20 @@
+class TypeEquipmentModel {
+  final int id;
+  final String name;
+
+  TypeEquipmentModel({required this.id, required this.name});
+
+  factory TypeEquipmentModel.fromJson(Map<String, dynamic> json) {
+    return TypeEquipmentModel(id: json['id'], name: json['name']);
+  }
+}
+
 class EquipmentModel {
   final int id;
   final int schoolId;
   final String name;
-  final String type;
+  final int typeEquipmentId;
+  final TypeEquipmentModel typeEquipment;
   final String? photoURL;
   final String? description;
   final int totalQuantity;
@@ -15,7 +27,8 @@ class EquipmentModel {
     required this.id,
     required this.schoolId,
     required this.name,
-    required this.type,
+    required this.typeEquipmentId,
+    required this.typeEquipment,
     this.photoURL,
     this.description,
     required this.totalQuantity,
@@ -69,7 +82,8 @@ class EquipmentModel {
       id: _readInt('id'),
       schoolId: _readInt('school_id'),
       name: _readString('name'),
-      type: _readString('type'),
+      typeEquipmentId: _readInt('type_equipment_id'),
+      typeEquipment: json['type_equipment'],
       photoURL: json['photo_url'],
       description: json['description'] as String?,
       totalQuantity: _readInt('total_quantity'),
@@ -85,7 +99,8 @@ class EquipmentModel {
       'id': id,
       'school_id': schoolId,
       'name': name,
-      'type': type,
+      'type_equipment_id': typeEquipmentId,
+      'type_equipment': typeEquipment,
       'photo_url': photoURL,
       'description': description,
       'total_quantity': totalQuantity,
